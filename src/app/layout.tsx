@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Web3Provider } from "@/components/wallet/WalletProvider";
+import XPToast from "@/components/XPToast";
 
 export const metadata: Metadata = {
   title: "VERSE - The Future of Web3 Community",
@@ -10,13 +11,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-      </head>
       <body className="antialiased">
-        <Web3Provider>{children}</Web3Provider>
+        <Web3Provider>
+          {children}
+          <XPToast />
+        </Web3Provider>
       </body>
     </html>
   );

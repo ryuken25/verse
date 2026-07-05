@@ -12,10 +12,11 @@ export interface LessonProgress {
   xpEarned: number;
   completedAt?: string;
   firstTryPass: boolean;
+  attempts: number;
 }
 
 export interface UserProgress {
-  address: string; // 'guest' or wallet address lowercase
+  address: string;
   lessons: Record<string, LessonProgress>;
   totalXP: number;
   level: number;
@@ -24,6 +25,17 @@ export interface UserProgress {
   completedLessons: number;
   completedQuizzes: number;
 }
+
+// Level thresholds
+export const LEVELS = [0, 200, 500, 900, 1400, 2000, 2700, 3500, 4400, 5400];
+
+// XP constants
+export const XP_READ_LESSON = 20;
+export const XP_PASS_QUIZ = 100;
+export const XP_MODULE_COMPLETE = 150;
+export const XP_COURSE_COMPLETE = 300;
+export const XP_DAILY_STREAK = 15;
+export const PASS_THRESHOLD = 100; // 100% required
 
 function getStorageKey(address: string): string {
   return `${PROGRESS_KEY_PREFIX}${address.toLowerCase()}`;
@@ -49,86 +61,23 @@ function emptyProgress(address: string): UserProgress {
   return { address, lessons: {}, totalXP: 0, level: 1, streak: 0, lastActiveDate: '', completedLessons: 0, completedQuizzes: 0 };
 }
 
-// XP constants
-export const XP_READ_LESSON = 10;
-export const XP_PASS_QUIZ = 50;
-export const XP_PERFECT_BONUS = 30;
-export const XP_FIRST_TRY_BONUS = 20;
-export const XP_DAILY_STREAK = 5;
-export const PASS_THRESHOLD = 100;
-export const XP_PER_LEVEL = 200;
-
 export function calcLevel(totalXP: number): number {
-  return 1 + Math.floor(totalXP / XP_PER_LEVEL);
+  for (let i = LEVELS.length - 1; i >= 0; i--) {
+    if (totalXP >= LEVELS[i]) return i + 1;
+  }
+  return 1;
 }
 
 export function calcLevelProgress(totalXP: number): number {
-  return (totalXP % XP_PER_LEVEL) / XP_PER_LEVEL;
+  const lvl = calcLevel(totalXP);
+  if (lvl >= LEVELS.length) return 1; // MAX
+  const current = LEVELS[lvl - 1];
+  const next = LEVELS[lvl];
+  return (totalXP - current) / (next - current);
 }
 
-export function markLessonRead(address: string, lessonId: string): UserProgress {
-  const progress = loadProgress(address);
-  if (!progress.lessons[lessonId]) {
-    progress.lessons[lessonId] = { lessonId, read: false, quizCompleted: false, quizPassed: false, xpEarned: 0, firstTryPass: false };
-  }
-  if (!progress.lessons[lessonId].read) {
-    progress.lessons[lessonId].read = true;
-    progress.lessons[lessonId].readAt = new Date().toISOString();
-    progress.totalXP += XP_READ_LESSON;
-    progress.lessons[lessonId].xpEarned += XP_READ_LESSON;
-    progress.level = calcLevel(progress.totalXP);
-    updateCounts(progress);
-    saveProgress(progress);
-  }
-  return progress;
-}
-
-export function submitQuiz(address: string, lessonId: string, score: number, isFirstAttempt: boolean): UserProgress {
-  const progress = loadProgress(address);
-  if (!progress.lessons[lessonId]) {
-    progress.lessons[lessonId] = { lessonId, read: false, quizCompleted: false, quizPassed: false, xpEarned: 0, firstTryPass: false };
-  }
-  const lp = progress.lessons[lessonId];
-  lp.quizCompleted = true;
-  lp.quizScore = score;
-
-  if (score >= PASS_THRESHOLD) {
-    if (!lp.quizPassed) {
-      // First time passing
-      lp.quizPassed = true;
-      lp.completedAt = new Date().toISOString();
-      lp.firstTryPass = isFirstAttempt;
-      progress.totalXP += XP_PASS_QUIZ;
-      lp.xpEarned += XP_PASS_QUIZ;
-      if (score === 100) {
-        progress.totalXP += XP_PERFECT_BONUS;
-        lp.xpEarned += XP_PERFECT_BONUS;
-      }
-      if (isFirstAttempt) {
-        progress.totalXP += XP_FIRST_TRY_BONUS;
-        lp.xpEarned += XP_FIRST_TRY_BONUS;
-      }
-    }
-    // Update streak
-    const today = new Date().toISOString().split('T')[0];
-    if (progress.lastActiveDate !== today) {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-      if (progress.lastActiveDate === yesterday) {
-        progress.streak += 1;
-      } else if (progress.lastActiveDate !== today) {
-        progress.streak = 1;
-      }
-      progress.lastActiveDate = today;
-      if (progress.streak > 1) {
-        progress.totalXP += XP_DAILY_STREAK;
-      }
-    }
-  }
-
-  progress.level = calcLevel(progress.totalXP);
-  updateCounts(progress);
-  saveProgress(progress);
-  return progress;
+export function isAllComplete(progress: UserProgress, totalLessons: number, totalQuizzes: number): boolean {
+  return progress.completedLessons >= totalLessons && progress.completedQuizzes >= totalQuizzes;
 }
 
 function updateCounts(progress: UserProgress) {
@@ -136,19 +85,139 @@ function updateCounts(progress: UserProgress) {
   progress.completedQuizzes = Object.values(progress.lessons).filter(l => l.quizPassed).length;
 }
 
+export function markLessonRead(address: string, lessonId: string): { progress: UserProgress; deltaXP: number; leveledUp: boolean } {
+  const progress = loadProgress(address);
+  const oldLevel = calcLevel(progress.totalXP);
+  let deltaXP = 0;
+
+  if (!progress.lessons[lessonId]) {
+    progress.lessons[lessonId] = { lessonId, read: false, quizCompleted: false, quizPassed: false, xpEarned: 0, firstTryPass: false, attempts: 0 };
+  }
+  if (!progress.lessons[lessonId].read) {
+    progress.lessons[lessonId].read = true;
+    progress.lessons[lessonId].readAt = new Date().toISOString();
+    progress.totalXP += XP_READ_LESSON;
+    progress.lessons[lessonId].xpEarned += XP_READ_LESSON;
+    deltaXP = XP_READ_LESSON;
+  }
+
+  // Update streak
+  const today = new Date().toISOString().split('T')[0];
+  if (progress.lastActiveDate !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    if (progress.lastActiveDate === yesterday) {
+      progress.streak += 1;
+    } else {
+      progress.streak = 1;
+    }
+    progress.lastActiveDate = today;
+    if (progress.streak > 1) {
+      progress.totalXP += XP_DAILY_STREAK;
+      deltaXP += XP_DAILY_STREAK;
+    }
+  }
+
+  progress.level = calcLevel(progress.totalXP);
+  const leveledUp = progress.level > oldLevel;
+  updateCounts(progress);
+  saveProgress(progress);
+
+  // Emit event
+  try {
+    const { emitProgressUpdated } = require('./progress-events');
+    emitProgressUpdated({
+      address: progress.address,
+      oldProgress: { ...progress, totalXP: progress.totalXP - deltaXP },
+      newProgress: progress,
+      deltaXP,
+      oldLevel,
+      newLevel: progress.level,
+      leveledUp,
+      lessonId,
+      reason: 'lesson_read',
+    });
+  } catch {}
+
+  return { progress, deltaXP, leveledUp };
+}
+
+export function submitQuiz(address: string, lessonId: string, score: number, isFirstAttempt: boolean): { progress: UserProgress; deltaXP: number; leveledUp: boolean; passed: boolean } {
+  const progress = loadProgress(address);
+  const oldLevel = calcLevel(progress.totalXP);
+  let deltaXP = 0;
+  let passed = false;
+
+  if (!progress.lessons[lessonId]) {
+    progress.lessons[lessonId] = { lessonId, read: false, quizCompleted: false, quizPassed: false, xpEarned: 0, firstTryPass: false, attempts: 0 };
+  }
+  const lp = progress.lessons[lessonId];
+  lp.quizCompleted = true;
+  lp.quizScore = score;
+  lp.attempts += 1;
+
+  if (score >= PASS_THRESHOLD) {
+    if (!lp.quizPassed) {
+      lp.quizPassed = true;
+      lp.completedAt = new Date().toISOString();
+      lp.firstTryPass = isFirstAttempt && lp.attempts === 1;
+      progress.totalXP += XP_PASS_QUIZ;
+      lp.xpEarned += XP_PASS_QUIZ;
+      deltaXP += XP_PASS_QUIZ;
+      passed = true;
+    }
+  }
+
+  // Update streak
+  const today = new Date().toISOString().split('T')[0];
+  if (progress.lastActiveDate !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+    if (progress.lastActiveDate === yesterday) {
+      progress.streak += 1;
+    } else {
+      progress.streak = 1;
+    }
+    progress.lastActiveDate = today;
+    if (progress.streak > 1) {
+      progress.totalXP += XP_DAILY_STREAK;
+      deltaXP += XP_DAILY_STREAK;
+    }
+  }
+
+  progress.level = calcLevel(progress.totalXP);
+  const leveledUp = progress.level > oldLevel;
+  updateCounts(progress);
+  saveProgress(progress);
+
+  // Emit event only if passed
+  if (passed) {
+    try {
+      const { emitProgressUpdated } = require('./progress-events');
+      emitProgressUpdated({
+        address: progress.address,
+        oldProgress: { ...progress, totalXP: progress.totalXP - deltaXP },
+        newProgress: progress,
+        deltaXP,
+        oldLevel,
+        newLevel: progress.level,
+        leveledUp,
+        lessonId,
+        reason: 'quiz_passed',
+      });
+    } catch {}
+  }
+
+  return { progress, deltaXP, leveledUp, passed };
+}
+
 export function mergeGuestProgress(walletAddress: string): UserProgress {
   const guest = loadProgress('guest');
   const wallet = loadProgress(walletAddress);
-  // Merge guest lessons into wallet (wallet takes precedence)
   for (const [id, lp] of Object.entries(guest.lessons)) {
-    if (!wallet.lessons[id]) {
-      wallet.lessons[id] = lp;
-    }
+    if (!wallet.lessons[id]) wallet.lessons[id] = lp;
   }
   updateCounts(wallet);
   wallet.level = calcLevel(wallet.totalXP);
   saveProgress(wallet);
-  // Clear guest
   localStorage.removeItem(getStorageKey('guest'));
   return wallet;
 }
