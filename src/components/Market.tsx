@@ -2,22 +2,36 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { TrendingUp, TrendingDown, ExternalLink, RefreshCw, Loader2, Newspaper, Star, Search, ChevronDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ExternalLink, RefreshCw, Loader2, Newspaper, Star, Search, ChevronDown, AlertCircle } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 const MarketScene3D = dynamic(() => import('@/components/three/MarketScene3D'), { ssr: false });
 
 interface Coin {
   id: string;
+  rank: number;
   symbol: string;
   name: string;
+  image: string;
   price: number;
   change24h: number;
   change7d: number;
   marketCap: number;
   volume24h: number;
-  image: string;
-  rank: number;
+}
+
+interface MarketResponse {
+  ok: boolean;
+  source: string;
+  cached: boolean;
+  stale: boolean;
+  lastUpdated: string;
+  page: number;
+  perPage: number;
+  total: number;
+  hasMore: boolean;
+  coins: Coin[];
+  error?: string;
 }
 
 interface NewsItem { title: string; url: string; date: string; description: string; }
@@ -45,7 +59,9 @@ export default function Market() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [newsLoading, setNewsLoading] = useState(true);
-  const [lastUpdate, setLastUpdate] = useState('');
+  const [lastUpdated, setLastUpdated] = useState('');
+  const [isStale, setIsStale] = useState(false);
+  const [apiError, setApiError] = useState('');
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const [showCount, setShowCount] = useState(INITIAL_SHOW);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -55,12 +71,21 @@ export default function Market() {
   // Fetch coins
   const fetchCoins = useCallback(async () => {
     setLoading(true);
+    setApiError('');
     try {
       const res = await fetch('/api/market?per_page=100');
-      const data = await res.json();
-      setAllCoins(data.coins || []);
-      setLastUpdate(new Date().toLocaleTimeString());
-    } catch {}
+      const data: MarketResponse = await res.json();
+      if (data.ok && data.coins?.length > 0) {
+        setAllCoins(data.coins);
+        setLastUpdated(data.lastUpdated);
+        setIsStale(data.stale);
+        if (data.error) setApiError(data.error);
+      } else {
+        setApiError(data.error || 'No market data available.');
+      }
+    } catch (e) {
+      setApiError('Failed to fetch market data.');
+    }
     setLoading(false);
   }, []);
 
@@ -101,20 +126,17 @@ export default function Market() {
     }
   }, [allCoins, activeTab, favorites, search]);
 
-  // Visible coins (paginated)
+  // Visible coins
   const visibleCoins = useMemo(() => filteredCoins.slice(0, showCount), [filteredCoins, showCount]);
   const hasMore = showCount < filteredCoins.length;
 
-  // Handle View More
+  // View More
   const handleViewMore = useCallback(() => {
     setLoadingMore(true);
-    setTimeout(() => {
-      setShowCount(prev => prev + LOAD_MORE);
-      setLoadingMore(false);
-    }, 300);
+    setTimeout(() => { setShowCount(prev => prev + LOAD_MORE); setLoadingMore(false); }, 300);
   }, []);
 
-  // Reset showCount when tab changes
+  // Reset on tab/search change
   useEffect(() => { setShowCount(INITIAL_SHOW); }, [activeTab, search]);
 
   const tabs: { key: Tab; label: string }[] = [
@@ -135,6 +157,14 @@ export default function Market() {
           <h2 className="text-3xl md:text-5xl font-bold mb-4">Market <span className="gradient-text">Dashboard</span></h2>
           <p className="text-base md:text-xl text-gray-400">Live crypto prices • Data from CoinGecko • News from Bitcoin.com</p>
         </motion.div>
+
+        {/* Stale/Error banner */}
+        {(isStale || apiError) && (
+          <div className="mb-6 p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center space-x-2">
+            <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+            <p className="text-xs text-yellow-300">{apiError || 'Using cached market data.'}</p>
+          </div>
+        )}
 
         {/* Tabs + Search */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -182,12 +212,12 @@ export default function Market() {
                       <p className="text-xs text-gray-500">{coin.symbol}</p>
                     </div>
                   </div>
-                  <span className="text-sm text-white text-right font-mono">{fmt(coin.price)}</span>
+                  <span className="text-sm text-white text-right font-mono">{coin.price > 0 ? fmt(coin.price) : '—'}</span>
                   <span className={`text-sm text-right flex items-center justify-end space-x-1 ${pctColor(coin.change24h)}`}>
                     {pctIcon(coin.change24h)}<span>{coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%</span>
                   </span>
-                  <span className="text-sm text-gray-400 text-right">{fmt(coin.marketCap)}</span>
-                  <span className="text-sm text-gray-400 text-right">{fmt(coin.volume24h)}</span>
+                  <span className="text-sm text-gray-400 text-right">{coin.marketCap > 0 ? fmt(coin.marketCap) : '—'}</span>
+                  <span className="text-sm text-gray-400 text-right">{coin.volume24h > 0 ? fmt(coin.volume24h) : '—'}</span>
                   <button type="button" onClick={() => toggleFav(coin.id)}
                     className="flex items-center justify-center p-1 rounded hover:bg-white/10 transition-colors">
                     <Star className={`w-4 h-4 ${favorites.has(coin.id) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
@@ -226,14 +256,14 @@ export default function Market() {
                   </button>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-lg text-white font-bold">{fmt(coin.price)}</span>
+                  <span className="text-lg text-white font-bold">{coin.price > 0 ? fmt(coin.price) : '—'}</span>
                   <span className={`text-sm flex items-center space-x-1 ${pctColor(coin.change24h)}`}>
                     {pctIcon(coin.change24h)}<span>{coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%</span>
                   </span>
                 </div>
                 <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-                  <span>MCap: {fmt(coin.marketCap)}</span>
-                  <span>Vol: {fmt(coin.volume24h)}</span>
+                  <span>MCap: {coin.marketCap > 0 ? fmt(coin.marketCap) : '—'}</span>
+                  <span>Vol: {coin.volume24h > 0 ? fmt(coin.volume24h) : '—'}</span>
                 </div>
               </motion.div>
             ))
@@ -265,9 +295,12 @@ export default function Market() {
           </div>
         )}
 
-        {/* Refresh */}
+        {/* Refresh + status */}
         <div className="flex items-center justify-between mb-8">
-          <span className="text-xs text-gray-500">{lastUpdate && `Last updated: ${lastUpdate}`}</span>
+          <div className="flex items-center space-x-2">
+            {lastUpdated && <span className="text-xs text-gray-500">Updated: {new Date(lastUpdated).toLocaleTimeString()}</span>}
+            {isStale && <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400">Cached</span>}
+          </div>
           <button type="button" onClick={() => { fetchCoins(); fetchNews(); }} disabled={loading}
             className="flex items-center space-x-1 text-purple-400 text-xs hover:text-purple-300 disabled:opacity-50">
             {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}<span>Refresh</span>
