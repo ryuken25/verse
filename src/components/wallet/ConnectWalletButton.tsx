@@ -6,7 +6,12 @@ import { useAccount } from 'wagmi';
 import { shortAddress } from '@/lib/wallet';
 import WalletModal from './WalletModal';
 
-export default function ConnectWalletButton() {
+interface ConnectWalletButtonProps {
+  onSuccess?: () => void;
+  className?: string;
+}
+
+export default function ConnectWalletButton({ onSuccess, className }: ConnectWalletButtonProps) {
   const { address, isConnected } = useAccount();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -19,7 +24,7 @@ export default function ConnectWalletButton() {
           isConnected
             ? 'bg-green-600/20 border border-green-500/30 text-green-400 hover:bg-green-600/30'
             : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/25'
-        }`}
+        } ${className || ''}`}
       >
         {isConnected ? (
           <>
@@ -36,7 +41,7 @@ export default function ConnectWalletButton() {
         )}
       </button>
 
-      <WalletModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
+      <WalletModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSuccess={onSuccess} />
     </>
   );
 }
