@@ -3,10 +3,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, ExternalLink, RefreshCw, Loader2, Newspaper, Star, Search, ChevronDown, AlertCircle } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-const MarketScene3D = dynamic(() => import('@/components/three/MarketScene3D'), { ssr: false });
-
 interface Coin {
   id: string;
   rank: number;
@@ -148,8 +144,10 @@ export default function Market() {
 
   return (
     <section id="market" className="relative py-20 md:py-32 overflow-hidden scroll-mt-24">
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#0a0e27] via-[#0d1130] to-[#0a0e27]" />
-      <MarketScene3D />
+      <div className="pointer-events-none absolute inset-0 z-0">
+        <div className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-purple-500/10 blur-3xl" />
+        <div className="absolute right-10 bottom-10 h-64 w-64 rounded-full bg-cyan-500/10 blur-3xl" />
+      </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}

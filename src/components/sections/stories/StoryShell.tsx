@@ -47,10 +47,11 @@ export default function StoryShell({
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(124,58,237,0.14),transparent_35%),radial-gradient(circle_at_80%_55%,rgba(34,211,238,0.10),transparent_30%)]" />
 
-      <div className="sticky top-24 flex min-h-[calc(100vh-6rem)] items-center py-10">
-        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-4 md:px-6 lg:grid-cols-[0.95fr_1.05fr]">
-          {/* Text side */}
-          <div className="order-2 flex min-h-[calc(100vh-8rem)] flex-col justify-center lg:order-1">
+      {/* Sticky wrapper — centered in viewport */}
+      <div className="sticky top-[72px] min-h-[calc(100vh-72px)]">
+        <div className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl grid-cols-1 gap-10 px-4 md:px-6 lg:grid-cols-[0.95fr_1.05fr]">
+          {/* Text side — vertically centered */}
+          <div className="flex min-h-[calc(100vh-72px)] flex-col justify-center py-10 order-2 lg:order-1">
             <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-purple-200 w-fit">
               {eyebrow}
             </span>
@@ -87,9 +88,9 @@ export default function StoryShell({
             </div>
           </div>
 
-          {/* Visual side */}
-          <div className="order-1 flex min-h-[360px] items-center justify-center lg:order-2 lg:min-h-[calc(100vh-8rem)]">
-            <div className="w-full max-w-[560px]">
+          {/* Visual side — vertically centered */}
+          <div className="flex min-h-[calc(100vh-72px)] items-center justify-center py-10 order-1 lg:order-2">
+            <div className="w-full max-w-[520px]">
               {visual({ activeStep, scrollYProgress })}
             </div>
           </div>

@@ -93,3 +93,15 @@ section { scroll-margin-top: 5rem; }
     opacity: 0.88;
   }
 }
+
+/* Pause animations when offscreen */
+.animation-paused,
+.animation-paused * {
+  animation-play-state: paused !important;
+}
+
+/* Mobile performance: reduce blur */
+@media (max-width: 768px) {
+  .max-md\:blur-sm { filter: blur(4px); }
+  .max-md\:blur-2xl { filter: blur(24px); }
+}

@@ -91,8 +91,12 @@ export default function Hero() {
       </AnimatePresence>
 
       <section id="home" className={`relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 scroll-mt-24 ${!introDone ? 'opacity-0 pointer-events-none' : ''}`}>
-        {/* 3D Scene */}
-        {!reducedMotion && <HeroScene3D />}
+        {/* 3D Scene — responsive container */}
+        {!reducedMotion && (
+          <div className="pointer-events-none absolute left-1/2 top-[48%] z-0 h-[520px] w-[520px] -translate-x-1/2 -translate-y-1/2 opacity-90 sm:h-[620px] sm:w-[620px] md:h-[760px] md:w-[760px] lg:h-[880px] lg:w-[880px] xl:h-[980px] xl:w-[980px] max-[480px]:top-[46%] max-[480px]:h-[390px] max-[480px]:w-[390px] max-[380px]:h-[340px] max-[380px]:w-[340px]">
+            <HeroScene3D />
+          </div>
+        )}
 
         {/* Background fallback */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
