@@ -1,222 +1,252 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 
 export type OrbitNode = {
   id: string;
   title: string;
   subtitle?: string;
   icon: ReactNode;
-  ring: 'inner' | 'outer';
+  ring?: 'inner' | 'outer';
   angle: number;
-  speed?: number;
   radius?: number;
-  calloutSide?: 'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-  color?: string;
+  speed?: number;
+  calloutSide:
+    | 'top'
+    | 'right'
+    | 'bottom'
+    | 'left'
+    | 'top-left'
+    | 'top-right'
+    | 'bottom-left'
+    | 'bottom-right';
+  color?: 'purple' | 'cyan' | 'blue' | 'green' | 'yellow' | 'pink';
 };
 
-type AnnotatedOrbitVisualProps = {
+type Props = {
+  theme: 'wallet' | 'fair' | 'community' | 'devtools';
   centerIcon: ReactNode;
   centerTitle: string;
   centerSubtitle?: string;
   nodes: OrbitNode[];
   activeNodeId?: string;
-  theme?: 'wallet' | 'fair' | 'community' | 'devtools';
   compact?: boolean;
   paused?: boolean;
 };
 
-const themeColors = {
-  wallet: { ring: 'rgba(124,58,237,0.22)', glow: 'rgba(124,58,237,0.18)', accent: '#a78bfa', line: 'rgba(124,58,237,0.35)' },
-  fair: { ring: 'rgba(139,92,246,0.22)', glow: 'rgba(139,92,246,0.18)', accent: '#c4b5fd', line: 'rgba(139,92,246,0.35)' },
-  community: { ring: 'rgba(20,184,166,0.22)', glow: 'rgba(20,184,166,0.18)', accent: '#5eead4', line: 'rgba(20,184,166,0.35)' },
-  devtools: { ring: 'rgba(59,130,246,0.22)', glow: 'rgba(59,130,246,0.18)', accent: '#93c5fd', line: 'rgba(59,130,246,0.35)' },
+const THEME = {
+  wallet: {
+    ring: 'rgba(34,211,238,0.24)',
+    ring2: 'rgba(124,58,237,0.20)',
+    active: 'rgb(34,211,238)',
+    glow: 'rgba(34,211,238,0.18)',
+  },
+  fair: {
+    ring: 'rgba(168,85,247,0.25)',
+    ring2: 'rgba(34,211,238,0.16)',
+    active: 'rgb(168,85,247)',
+    glow: 'rgba(168,85,247,0.18)',
+  },
+  community: {
+    ring: 'rgba(45,212,191,0.24)',
+    ring2: 'rgba(96,165,250,0.16)',
+    active: 'rgb(45,212,191)',
+    glow: 'rgba(45,212,191,0.16)',
+  },
+  devtools: {
+    ring: 'rgba(96,165,250,0.24)',
+    ring2: 'rgba(124,58,237,0.16)',
+    active: 'rgb(96,165,250)',
+    glow: 'rgba(96,165,250,0.16)',
+  },
 };
 
-function getLabelOffset(side: string) {
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function labelOffset(side: OrbitNode['calloutSide'], compact = false) {
+  const d = compact ? 42 : 64;
+  const long = compact ? 92 : 150;
+
   switch (side) {
-    case 'top': return { x: 0, y: -52 };
-    case 'right': return { x: 54, y: 0 };
-    case 'bottom': return { x: 0, y: 52 };
-    case 'left': return { x: -54, y: 0 };
-    case 'top-left': return { x: -40, y: -40 };
-    case 'top-right': return { x: 40, y: -40 };
-    case 'bottom-left': return { x: -40, y: 40 };
-    case 'bottom-right': return { x: 40, y: 40 };
-    default: return { x: 48, y: 0 };
+    case 'top':
+      return { x: -52, y: -d };
+    case 'right':
+      return { x: d, y: -20 };
+    case 'bottom':
+      return { x: -52, y: d - 8 };
+    case 'left':
+      return { x: -long, y: -20 };
+    case 'top-left':
+      return { x: -long, y: -d };
+    case 'top-right':
+      return { x: d, y: -d };
+    case 'bottom-left':
+      return { x: -long, y: d - 5 };
+    case 'bottom-right':
+      return { x: d, y: d - 5 };
   }
 }
 
 export default function AnnotatedOrbitVisual({
+  theme,
   centerIcon,
   centerTitle,
   centerSubtitle,
   nodes,
   activeNodeId,
-  theme = 'wallet',
   compact = false,
   paused = false,
-}: AnnotatedOrbitVisualProps) {
-  const [time, setTime] = useState(0);
-  const colors = themeColors[theme];
-  const ringRadii = { inner: 92, outer: 148 };
+}: Props) {
+  const reduceMotion = useReducedMotion();
+  const [tick, setTick] = useState(0);
+  const t = THEME[theme];
 
-  // Animation loop
+  const width = compact ? 340 : 540;
+  const height = compact ? 340 : 540;
+  const cx = width / 2;
+  const cy = height / 2;
+  const ellipseY = compact ? 0.46 : 0.50;
+
   useEffect(() => {
-    let raf: number;
-    const tick = () => {
-      setTime((t) => t + 0.016);
-      raf = requestAnimationFrame(tick);
+    if (paused || reduceMotion) return;
+    let raf = 0;
+    let start = performance.now();
+    const loop = (now: number) => {
+      setTick((now - start) / 1000);
+      raf = requestAnimationFrame(loop);
     };
-    raf = requestAnimationFrame(tick);
+    raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [paused, reduceMotion]);
 
-  // Mouse parallax for card
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 60, damping: 20 });
-  const sy = useSpring(my, { stiffness: 60, damping: 20 });
-  const rotateY = useTransform(sx, [-0.5, 0.5], [-4, 4]);
-  const rotateX = useTransform(sy, [-0.5, 0.5], [4, -4]);
+  const positioned = useMemo(() => {
+    return nodes.map((node) => {
+      const radius =
+        node.radius ??
+        (node.ring === 'outer'
+          ? compact ? 122 : 180
+          : compact ? 82 : 116);
 
-  // Compute node positions
-  const nodePositions = nodes.map((node) => {
-    const r = node.radius || ringRadii[node.ring];
-    const speed = node.speed || 0.12;
-    const angle = (node.angle * Math.PI) / 180 + time * speed;
-    const x = Math.cos(angle) * r;
-    const y = Math.sin(angle) * r * 0.55; // elliptical
-    const depth = (Math.sin(angle) + 1) / 2; // 0..1
-    const scale = 0.88 + depth * 0.14;
-    const opacity = 0.6 + depth * 0.4;
-    return { ...node, x, y, depth, scale, opacity };
-  });
+      const animatedAngle =
+        node.angle + (paused || reduceMotion ? 0 : tick * (node.speed ?? 3.2));
+
+      const angle = (animatedAngle * Math.PI) / 180;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius * ellipseY;
+
+      const offset = labelOffset(node.calloutSide, compact);
+      const labelWidth = compact ? 98 : 142;
+      const labelHeight = compact ? 40 : 54;
+
+      const labelX = clamp(x + offset.x, 14, width - labelWidth - 14);
+      const labelY = clamp(y + offset.y, 14, height - labelHeight - 14);
+
+      const targetX = labelX + labelWidth / 2;
+      const targetY = labelY + labelHeight / 2;
+      const elbowX = x + (targetX - x) * 0.58;
+      const elbowY = y + (targetY - y) * 0.24;
+
+      return {
+        ...node,
+        x,
+        y,
+        labelX,
+        labelY,
+        labelWidth,
+        labelHeight,
+        targetX,
+        targetY,
+        elbowX,
+        elbowY,
+        active: node.id === activeNodeId,
+      };
+    });
+  }, [nodes, tick, cx, cy, ellipseY, compact, width, height, activeNodeId, paused, reduceMotion]);
 
   return (
-    <motion.div
-      onMouseMove={(e) => {
-        const rect = e.currentTarget.getBoundingClientRect();
-        mx.set((e.clientX - rect.left) / rect.width - 0.5);
-        my.set((e.clientY - rect.top) / rect.height - 0.5);
-      }}
-      onMouseLeave={() => { mx.set(0); my.set(0); }}
-      style={{ rotateX, rotateY, transformPerspective: 1200 }}
-      className="relative mx-auto aspect-square w-full max-w-[520px] rounded-[2rem] border border-white/10 bg-white/[0.035] overflow-hidden"
+    <div
+      data-testid={`annotated-orbit-${theme}`}
+      className={[
+        'relative mx-auto overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.04]',
+        'shadow-[0_24px_80px_rgba(0,0,0,0.22)]',
+        compact ? 'h-[340px] w-full max-w-[340px]' : 'h-[540px] w-full max-w-[540px]',
+        paused ? 'animation-paused' : '',
+      ].join(' ')}
     >
-      {/* Background glow */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute left-1/2 top-[30%] h-48 w-48 -translate-x-1/2 rounded-full blur-3xl" style={{ background: colors.glow }} />
-        <div className="absolute left-1/2 top-[45%] h-64 w-64 -translate-x-1/2 rounded-full blur-3xl" style={{ background: colors.glow, opacity: 0.5 }} />
-      </div>
+      <div
+        className="pointer-events-none absolute left-1/2 top-[22%] h-44 w-44 -translate-x-1/2 rounded-full blur-3xl md:h-60 md:w-60"
+        style={{ backgroundColor: t.glow }}
+      />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_42%,rgba(124,58,237,0.12),transparent_34%),radial-gradient(circle_at_70%_35%,rgba(34,211,238,0.08),transparent_30%)]" />
 
-      {/* SVG overlay for orbit rings + callout lines */}
-      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 520 520">
-        {/* Inner orbit ring */}
-        <ellipse cx="260" cy="260" rx={ringRadii.inner} ry={ringRadii.inner * 0.55}
-          fill="none" stroke={colors.ring} strokeWidth="1.5" strokeDasharray="4 4" />
-        {/* Outer orbit ring */}
-        <ellipse cx="260" cy="260" rx={ringRadii.outer} ry={ringRadii.outer * 0.55}
-          fill="none" stroke={colors.ring} strokeWidth="1" strokeDasharray="4 6" />
-
-        {/* Callout lines from nodes to labels */}
-        {nodePositions.map((node) => {
-          const nodeCx = 260 + node.x;
-          const nodeCy = 260 + node.y;
-          const offset = getLabelOffset(node.calloutSide || 'right');
-          const labelCx = nodeCx + offset.x;
-          const labelCy = nodeCy + offset.y;
-          const isActive = node.id === activeNodeId;
-
-          // 2-segment line: node → elbow → label
-          const midX = nodeCx + offset.x * 0.4;
-          const midY = nodeCy + offset.y * 0.4;
-
-          return (
-            <g key={node.id}>
-              {/* Leader line */}
-              <path
-                d={`M ${nodeCx} ${nodeCy} L ${midX} ${midY} L ${labelCx} ${labelCy}`}
-                fill="none"
-                stroke={isActive ? colors.accent : colors.line}
-                strokeWidth={isActive ? 1.5 : 1}
-                opacity={isActive ? 0.8 : 0.4}
-              />
-              {/* Dot at node end */}
-              <circle cx={nodeCx} cy={nodeCy} r={isActive ? 3 : 2}
-                fill={isActive ? colors.accent : colors.line} opacity={isActive ? 1 : 0.6} />
-              {/* Dot at label end */}
-              <circle cx={labelCx} cy={labelCy} r={2}
-                fill={isActive ? colors.accent : colors.line} opacity={isActive ? 0.8 : 0.4} />
-            </g>
-          );
-        })}
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        aria-hidden="true"
+      >
+        <ellipse cx={cx} cy={cy} rx={compact ? 122 : 180} ry={(compact ? 122 : 180) * ellipseY} fill="none" stroke={t.ring} strokeWidth="1.3" />
+        <ellipse cx={cx} cy={cy} rx={compact ? 82 : 116} ry={(compact ? 82 : 116) * ellipseY} fill="none" stroke={t.ring2} strokeWidth="1" />
+        {positioned.map((node) => (
+          <g key={`line-${node.id}`}>
+            <path
+              d={`M ${node.x} ${node.y} L ${node.elbowX} ${node.elbowY} L ${node.targetX} ${node.targetY}`}
+              fill="none"
+              stroke={node.active ? t.active : 'rgba(255,255,255,0.16)'}
+              strokeWidth={node.active ? 1.7 : 1}
+              strokeLinecap="round"
+            />
+            <circle cx={node.x} cy={node.y} r={node.active ? 3.8 : 2.3} fill={node.active ? t.active : 'rgba(255,255,255,0.38)'} />
+          </g>
+        ))}
       </svg>
 
-      {/* Center hub */}
-      <div className="absolute left-1/2 top-1/2 z-10 -translate-x-1/2 -translate-y-1/2 text-center">
-        <div className="mx-auto mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/15 bg-white/[0.06] shadow-lg"
-          style={{ boxShadow: `0 0 32px ${colors.glow}` }}>
-          {centerIcon}
-        </div>
-        <p className="text-sm font-semibold text-white">{centerTitle}</p>
-        {centerSubtitle && <p className="mt-0.5 text-[10px] text-gray-400 max-w-[140px]">{centerSubtitle}</p>}
-      </div>
+      <motion.div
+        animate={reduceMotion || paused ? {} : { rotate: [0, 1.2, -1.2, 0], scale: [1, 1.015, 1] }}
+        transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-2xl border border-white/15 bg-white/[0.09] p-4 text-center backdrop-blur-md"
+        style={{ left: cx, top: cy, width: compact ? 112 : 144, minHeight: compact ? 92 : 116 }}
+      >
+        <div className="mb-2 text-white">{centerIcon}</div>
+        <div className="text-sm font-semibold text-white">{centerTitle}</div>
+        {centerSubtitle && !compact && <div className="mt-1 text-[10px] leading-4 text-gray-400">{centerSubtitle}</div>}
+      </motion.div>
 
-      {/* Orbit nodes with labels */}
-      {nodePositions.map((node) => {
-        const isActive = node.id === activeNodeId;
-        const offset = getLabelOffset(node.calloutSide || 'right');
-
-        return (
-          <div
-            key={node.id}
-            className="absolute left-1/2 top-1/2 pointer-events-none z-20"
-            style={{
-              transform: `translate(${node.x}px, ${node.y}px) translate(-50%, -50%) scale(${node.scale})`,
-              opacity: node.opacity,
-            }}
+      {positioned.map((node) => (
+        <div key={node.id}>
+          <motion.div
+            data-testid={`orbit-node-${node.id}`}
+            animate={{ scale: node.active ? 1.08 : 1, opacity: node.active ? 1 : 0.78 }}
+            transition={{ duration: 0.2 }}
+            className={[
+              'absolute z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border backdrop-blur-md',
+              compact ? 'h-9 w-9' : 'h-12 w-12',
+              node.active
+                ? 'border-cyan-300/80 bg-cyan-300/15 shadow-[0_0_28px_rgba(34,211,238,0.26)]'
+                : 'border-white/15 bg-white/10 shadow-[0_0_18px_rgba(124,58,237,0.12)]',
+            ].join(' ')}
+            style={{ left: node.x, top: node.y }}
           >
-            {/* Node bubble */}
-            <div className={[
-              'flex h-10 w-10 items-center justify-center rounded-full border backdrop-blur-xl transition-all duration-300',
-              isActive
-                ? 'border-white/30 bg-white/15 shadow-[0_0_20px_rgba(124,58,237,0.3)]'
-                : 'border-white/10 bg-white/[0.06]',
-            ].join(' ')}>
-              {node.icon}
-            </div>
+            {node.icon}
+          </motion.div>
 
-            {/* Label chip — offset from node */}
-            <div
-              className="absolute whitespace-nowrap"
-              style={{
-                left: `calc(50% + ${offset.x}px)`,
-                top: `calc(50% + ${offset.y}px)`,
-                transform: 'translate(-50%, -50%)',
-              }}
-            >
-              <div className={[
-                'rounded-lg border px-2.5 py-1 backdrop-blur-xl transition-all duration-300',
-                isActive
-                  ? 'border-white/20 bg-white/[0.1] shadow-[0_0_16px_rgba(124,58,237,0.2)]'
-                  : 'border-white/[0.08] bg-white/[0.04]',
-              ].join(' ')}>
-                <p className={['text-[10px] font-semibold', isActive ? 'text-white' : 'text-gray-300'].join(' ')}>
-                  {node.title}
-                </p>
-                {node.subtitle && (
-                  <p className={['text-[8px]', isActive ? 'text-gray-300' : 'text-gray-500'].join(' ')}>
-                    {node.subtitle}
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </motion.div>
+          <motion.div
+            data-testid={`orbit-label-${node.id}`}
+            animate={{ opacity: node.active ? 1 : 0.76, scale: node.active ? 1.02 : 1 }}
+            transition={{ duration: 0.2 }}
+            className={[
+              'absolute z-20 rounded-xl border px-3 py-2 backdrop-blur-md',
+              node.active ? 'border-cyan-300/50 bg-cyan-300/[0.10]' : 'border-white/10 bg-[#0c1028]/75',
+            ].join(' ')}
+            style={{ left: node.labelX, top: node.labelY, width: node.labelWidth, minHeight: node.labelHeight }}
+          >
+            <div className="truncate text-[11px] font-semibold text-white">{node.title}</div>
+            {node.subtitle && !compact && <div className="mt-0.5 line-clamp-2 text-[10px] leading-3 text-gray-400">{node.subtitle}</div>}
+          </motion.div>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -1049,6 +1049,64 @@ These protocols are interconnected: Aave accepts stETH as collateral, Curve liqu
         id: 'decentralized-exchanges',
         title: 'Decentralized Exchanges',
         description: 'Understand how DEXs work, from order books to automated market makers and liquidity pools.',
+        overviewContent: `# Decentralized Exchanges
+
+A **decentralized exchange**, or **DEX**, lets users trade crypto directly from their wallets through smart contracts.
+
+Unlike a centralized exchange, a DEX does not require you to deposit funds into a company-controlled account before trading. You stay in custody until the swap executes.
+
+## What you will learn
+
+- **How DEXs differ from centralized exchanges**
+- **How wallet-based swaps work**
+- **What liquidity pools do**
+- **Why AMMs use token ratios to price trades**
+- **What slippage means**
+- **Why approvals can be risky**
+- **How liquidity providers earn fees**
+- **What impermanent loss means**
+
+## Mental model
+
+A centralized exchange is like trading inside a company database.
+
+A DEX is more like trading against public smart contracts. The contract defines the rules, the pool provides liquidity, and your wallet signs the action.
+
+## DEX vs CEX
+
+| Feature | CEX | DEX |
+|---|---|---|
+| Custody | Exchange holds funds | User keeps wallet custody |
+| Login | Email/KYC | Wallet connection |
+| Matching | Internal order book | Smart contract / AMM |
+| Transparency | Private database | On-chain transactions |
+| Main risk | Exchange/custodian risk | Smart contract/user error risk |
+
+## Key concepts
+
+- **Liquidity pool** — tokens locked in a smart contract for trading.
+- **AMM** — automated market maker that prices swaps using formulas.
+- **Slippage** — difference between expected and final execution price.
+- **Approval** — permission for a contract to spend a token.
+- **Impermanent loss** — LP risk when token prices move after deposit.
+
+## Recommended path
+
+1. Start with **How DEXs Work**.
+2. Continue to **AMM Explained**.
+3. Learn **Liquidity Pools**.
+4. Finish with risk topics like slippage, approvals, and impermanent loss.
+
+## Before you begin
+
+You should understand what a wallet is, what a smart contract is, and why transaction signing matters.`,
+        learningGoals: [
+          'Explain what a DEX is',
+          'Compare DEXs and centralized exchanges',
+          'Describe how liquidity pools enable swaps',
+          'Explain how AMMs price assets',
+          'Identify slippage and approval risks',
+        ],
         lessons: [
           {
             id: 'how-dexs-work',

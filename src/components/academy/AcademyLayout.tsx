@@ -493,21 +493,27 @@ export default function AcademyLayout() {
     setProgress(loadProgress(addr));
   }, [isConnected, address]);
 
-  // Resolve hash — default to first module overview
+  // Resolve hash with hashchange listener
   useEffect(() => {
-    const hash = window.location.hash.slice(1);
-    if (hash) {
-      setActiveId(HASH_ALIASES[hash] || hash);
-    } else {
-      setActiveId(courses[0]?.modules[0]?.id ?? null);
-    }
+    const resolveHash = () => {
+      const hash = window.location.hash.slice(1);
+      const next = hash ? HASH_ALIASES[hash] || hash : courses[0]?.modules[0]?.id ?? null;
+      setActiveId(next);
+    };
+    resolveHash();
+    window.addEventListener('hashchange', resolveHash);
+    return () => window.removeEventListener('hashchange', resolveHash);
   }, []);
 
-  useEffect(() => { if (activeId) window.history.replaceState(null, '', `#${activeId}`); }, [activeId]);
+  // Use pushState on user navigation (not replaceState) so back button works
+  const updateHash = useCallback((id: string) => {
+    setActiveId(id);
+    window.history.pushState(null, '', `#${id}`);
+  }, []);
 
-  const selectModule = useCallback((id: string) => { setActiveId(id); window.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
+  const selectModule = useCallback((id: string) => { updateHash(id); window.scrollTo({ top: 0, behavior: 'smooth' }); }, [updateHash]);
   const selectLesson = useCallback((id: string) => {
-    setActiveId(id); window.scrollTo({ top: 0, behavior: 'smooth' });
+    updateHash(id); window.scrollTo({ top: 0, behavior: 'smooth' });
     const addr = isConnected && address ? address : 'guest';
     setProgress(loadProgress(addr));
   }, [isConnected, address]);
