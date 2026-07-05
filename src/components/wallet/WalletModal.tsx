@@ -97,14 +97,14 @@ export default function WalletModal({ isOpen, onClose }: WalletModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 backdrop-blur-md"
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       >
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
-          className="glass p-6 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-sm max-h-[85vh] overflow-y-auto"
+          className="bg-[#101322]/95 border border-white/15 p-6 rounded-2xl w-full sm:max-w-sm max-h-[90vh] overflow-y-auto shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

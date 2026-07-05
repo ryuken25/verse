@@ -55,7 +55,7 @@ export const XP_PASS_QUIZ = 50;
 export const XP_PERFECT_BONUS = 30;
 export const XP_FIRST_TRY_BONUS = 20;
 export const XP_DAILY_STREAK = 5;
-export const PASS_THRESHOLD = 80;
+export const PASS_THRESHOLD = 100;
 export const XP_PER_LEVEL = 200;
 
 export function calcLevel(totalXP: number): number {
