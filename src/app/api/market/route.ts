@@ -9,7 +9,8 @@ export async function GET() {
   }
 
   try {
-    const ids = 'bitcoin,ethereum,verse-bitcoin,polygon';
+    // CoinGecko IDs from official docs
+    const ids = 'bitcoin,ethereum,verse-bitcoin,polygon-ecosystem-token';
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
 
     const res = await fetch(url, {
@@ -21,10 +22,38 @@ export async function GET() {
       const data = await res.json();
       const result = {
         tokens: [
-          { id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin', color: 'from-orange-500 to-yellow-500', ...data.bitcoin },
-          { id: 'ethereum', symbol: 'ETH', name: 'Ethereum', color: 'from-blue-500 to-purple-500', ...data.ethereum },
-          { id: 'verse-bitcoin', symbol: 'VERSE', name: 'Verse', color: 'from-purple-500 to-blue-500', ...data['verse-bitcoin'] },
-          { id: 'polygon', symbol: 'POL', name: 'Polygon', color: 'from-purple-600 to-indigo-600', ...data.polygon },
+          {
+            id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin',
+            color: 'from-orange-500 to-yellow-500',
+            price: data.bitcoin?.usd ?? 0,
+            change24h: data.bitcoin?.usd_24h_change ?? 0,
+            marketCap: data.bitcoin?.usd_market_cap ?? 0,
+            volume24h: data.bitcoin?.usd_24h_vol ?? 0,
+          },
+          {
+            id: 'ethereum', symbol: 'ETH', name: 'Ethereum',
+            color: 'from-blue-500 to-purple-500',
+            price: data.ethereum?.usd ?? 0,
+            change24h: data.ethereum?.usd_24h_change ?? 0,
+            marketCap: data.ethereum?.usd_market_cap ?? 0,
+            volume24h: data.ethereum?.usd_24h_vol ?? 0,
+          },
+          {
+            id: 'verse-bitcoin', symbol: 'VERSE', name: 'Verse',
+            color: 'from-purple-500 to-blue-500',
+            price: data['verse-bitcoin']?.usd ?? 0,
+            change24h: data['verse-bitcoin']?.usd_24h_change ?? 0,
+            marketCap: data['verse-bitcoin']?.usd_market_cap ?? 0,
+            volume24h: data['verse-bitcoin']?.usd_24h_vol ?? 0,
+          },
+          {
+            id: 'polygon-ecosystem-token', symbol: 'POL', name: 'Polygon',
+            color: 'from-purple-600 to-indigo-600',
+            price: data['polygon-ecosystem-token']?.usd ?? 0,
+            change24h: data['polygon-ecosystem-token']?.usd_24h_change ?? 0,
+            marketCap: data['polygon-ecosystem-token']?.usd_market_cap ?? 0,
+            volume24h: data['polygon-ecosystem-token']?.usd_24h_vol ?? 0,
+          },
         ],
       };
       cache = { data: result, timestamp: Date.now() };
