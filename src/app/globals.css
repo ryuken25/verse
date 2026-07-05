@@ -64,3 +64,32 @@ section { scroll-margin-top: 5rem; }
     transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
   }
 }
+
+/* Saturn orbit system */
+@keyframes saturn-ring-rotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes saturn-orbit {
+  0% {
+    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg) scale(1);
+    opacity: 0.88;
+  }
+  25% {
+    transform: rotate(90deg) translateX(var(--orbit-radius)) rotate(-90deg) scale(0.96);
+    opacity: 0.78;
+  }
+  50% {
+    transform: rotate(180deg) translateX(var(--orbit-radius)) rotate(-180deg) scale(0.90);
+    opacity: 0.68;
+  }
+  75% {
+    transform: rotate(270deg) translateX(var(--orbit-radius)) rotate(-270deg) scale(1.04);
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg) scale(1);
+    opacity: 0.88;
+  }
+}

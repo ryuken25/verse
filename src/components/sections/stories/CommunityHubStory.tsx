@@ -1,22 +1,22 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import StoryOrbitVisual from './StoryOrbitVisual';
+import SaturnOrbitVisual from './SaturnOrbitVisual';
 import { Users, MessageCircle, Linkedin, Hammer, ExternalLink } from 'lucide-react';
 
 const steps = [
-  { id: 'join-network', kicker: 'Network', title: 'Start with the community layer', body: 'Web3 is easier when you are not learning alone. Community channels help users discover updates, ask questions, and find builders working on similar problems.', bullets: ['Learn with others', 'Find builders', 'Follow ecosystem updates'] },
-  { id: 'telegram-discord', kicker: 'Chat', title: 'Telegram and Discord keep builders connected', body: 'Fast-moving communities usually organize through chat. Telegram is useful for quick updates, while Discord is useful for structured channels, events, and developer discussions.', bullets: ['Telegram for quick updates', 'Discord for channels', 'Events and support'] },
-  { id: 'twitter-linkedin', kicker: 'Social', title: 'X and LinkedIn extend the network', body: 'Public social channels help projects share announcements, educational threads, partnership news, and developer opportunities.', bullets: ['X for announcements', 'LinkedIn for professional updates', 'Public reputation'] },
-  { id: 'builders', kicker: 'Build', title: 'Community turns users into builders', body: 'A strong ecosystem is not just about token price. It grows when people learn, build, review, ship, and help each other improve.', bullets: ['Ship projects', 'Review dApps', 'Share feedback'] },
+  { id: 'join', kicker: 'Network', title: 'Start with the community layer', body: 'Web3 is easier when you are not learning alone. Community channels help users discover updates and find builders.', bullets: ['Learn with others', 'Find builders', 'Follow ecosystem updates'] },
+  { id: 'chat', kicker: 'Chat', title: 'Telegram and Discord keep builders connected', body: 'Telegram is useful for quick updates, while Discord is useful for structured channels, events, and developer discussions.', bullets: ['Telegram for quick updates', 'Discord for channels', 'Events and support'] },
+  { id: 'social', kicker: 'Social', title: 'X and LinkedIn extend the network', body: 'Public social channels help projects share announcements, educational threads, partnership news, and developer opportunities.', bullets: ['X for announcements', 'LinkedIn for professional updates', 'Public reputation'] },
+  { id: 'build', kicker: 'Build', title: 'Community turns users into builders', body: 'A strong ecosystem grows when people learn, build, review, ship, and help each other improve.', bullets: ['Ship projects', 'Review dApps', 'Share feedback'] },
 ];
 
 const badges = [
-  { id: 'tg', label: 'Telegram', icon: <MessageCircle className="w-5 h-5 text-blue-300" />, color: 'blue', radius: 120, duration: 12, delay: 0 },
-  { id: 'dc', label: 'Discord', icon: <Users className="w-5 h-5 text-indigo-300" />, color: 'indigo', radius: 140, duration: 15, delay: 1 },
-  { id: 'x', label: 'X', icon: <ExternalLink className="w-5 h-5 text-gray-300" />, color: 'gray', radius: 110, duration: 10, delay: 0.5 },
-  { id: 'li', label: 'LinkedIn', icon: <Linkedin className="w-5 h-5 text-blue-300" />, color: 'blue', radius: 130, duration: 14, delay: 1.5 },
-  { id: 'build', label: 'Builder', icon: <Hammer className="w-5 h-5 text-orange-300" />, color: 'orange', radius: 100, duration: 11, delay: 0.8 },
+  { id: 'tg', label: 'Telegram', icon: <MessageCircle className="w-5 h-5 text-blue-300" />, ring: 0, angle: 0, duration: 22 },
+  { id: 'dc', label: 'Discord', icon: <Users className="w-5 h-5 text-indigo-300" />, ring: 0, angle: 120, duration: 24 },
+  { id: 'x', label: 'X', icon: <ExternalLink className="w-5 h-5 text-gray-300" />, ring: 1, angle: 60, duration: 26 },
+  { id: 'li', label: 'LinkedIn', icon: <Linkedin className="w-5 h-5 text-blue-300" />, ring: 1, angle: 180, duration: 28 },
+  { id: 'build', label: 'Builder', icon: <Hammer className="w-5 h-5 text-orange-300" />, ring: 1, angle: 300, duration: 30 },
 ];
 
 export default function CommunityHubStory() {
@@ -27,9 +27,9 @@ export default function CommunityHubStory() {
       title="Community Hub"
       description="Join the Bitcoin.com and VERSE community. Connect with developers, traders, learners, and builders worldwide."
       steps={steps}
-      minHeightClass="min-h-[220vh] lg:min-h-[300vh]"
+      minHeightClass="min-h-[300vh] lg:min-h-[340vh]"
       visual={({ activeStep }) => (
-        <StoryOrbitVisual
+        <SaturnOrbitVisual
           center={
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-500/30 to-cyan-500/30 border border-teal-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(20,184,166,0.3)]">
               <Users className="w-10 h-10 text-teal-300" />

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Web3Provider } from "@/components/wallet/WalletProvider";
 import XPToast from "@/components/XPToast";
+import RouteLoadingOverlay from "@/components/navigation/RouteLoadingOverlay";
 
 export const metadata: Metadata = {
   title: "VERSE - The Future of Web3 Community",
@@ -15,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Web3Provider>
           {children}
           <XPToast />
+          <RouteLoadingOverlay />
         </Web3Provider>
       </body>
     </html>

@@ -95,15 +95,28 @@ export default function OrbitingLogoCoin({
             <meshBasicMaterial map={texture} transparent side={THREE.DoubleSide} />
           </mesh>
 
-          {/* Colored halo — additive blending, no shadow */}
-          <mesh scale={1.3} castShadow={false} receiveShadow={false}>
-            <circleGeometry args={[size, 32]} />
+          {/* Primary glow halo — additive */}
+          <mesh scale={1.25} castShadow={false} receiveShadow={false} renderOrder={-1}>
+            <circleGeometry args={[size * 0.95, 48]} />
             <meshBasicMaterial
               color={emissiveColor}
               transparent
-              opacity={0.16}
+              opacity={0.12}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
+              toneMapped={false}
+            />
+          </mesh>
+          {/* Secondary outer glow */}
+          <mesh scale={1.45} castShadow={false} receiveShadow={false} renderOrder={-2}>
+            <circleGeometry args={[size * 1.05, 48]} />
+            <meshBasicMaterial
+              color={emissiveColor}
+              transparent
+              opacity={0.06}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              toneMapped={false}
             />
           </mesh>
         </group>

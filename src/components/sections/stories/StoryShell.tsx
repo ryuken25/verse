@@ -47,11 +47,11 @@ export default function StoryShell({
       {/* Background glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(124,58,237,0.14),transparent_35%),radial-gradient(circle_at_80%_55%,rgba(34,211,238,0.10),transparent_30%)]" />
 
-      <div className="sticky top-16 flex min-h-[calc(100vh-4rem)] items-center py-14 md:top-20 md:min-h-[calc(100vh-5rem)]">
-        <div className="relative z-10 mx-auto grid w-full max-w-7xl gap-8 px-4 md:px-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="sticky top-24 flex min-h-[calc(100vh-6rem)] items-center py-10">
+        <div className="mx-auto grid w-full max-w-7xl grid-cols-1 gap-10 px-4 md:px-6 lg:grid-cols-[0.95fr_1.05fr]">
           {/* Text side */}
-          <div className="order-2 lg:order-1">
-            <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-purple-200">
+          <div className="order-2 flex min-h-[calc(100vh-8rem)] flex-col justify-center lg:order-1">
+            <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-purple-200 w-fit">
               {eyebrow}
             </span>
 
@@ -88,8 +88,10 @@ export default function StoryShell({
           </div>
 
           {/* Visual side */}
-          <div className="order-1 lg:order-2 lg:sticky lg:top-28 lg:h-fit">
-            {visual({ activeStep, scrollYProgress })}
+          <div className="order-1 flex min-h-[360px] items-center justify-center lg:order-2 lg:min-h-[calc(100vh-8rem)]">
+            <div className="w-full max-w-[560px]">
+              {visual({ activeStep, scrollYProgress })}
+            </div>
           </div>
         </div>
       </div>
