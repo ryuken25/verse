@@ -2,5 +2,5 @@
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
-  "installCommand": "npm install --ignore-scripts"
+  "installCommand": "yarn install --ignore-engines"
 }
