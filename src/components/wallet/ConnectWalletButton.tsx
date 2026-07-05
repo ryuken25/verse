@@ -7,11 +7,10 @@ import { shortAddress } from '@/lib/wallet';
 import WalletModal from './WalletModal';
 
 interface ConnectWalletButtonProps {
-  onSuccess?: () => void;
   className?: string;
 }
 
-export default function ConnectWalletButton({ onSuccess, className }: ConnectWalletButtonProps) {
+export default function ConnectWalletButton({ className }: ConnectWalletButtonProps) {
   const { address, isConnected } = useAccount();
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -41,7 +40,7 @@ export default function ConnectWalletButton({ onSuccess, className }: ConnectWal
         )}
       </button>
 
-      <WalletModal isOpen={modalOpen} onClose={() => setModalOpen(false)} onSuccess={onSuccess} />
+      <WalletModal isOpen={modalOpen} onClose={() => setModalOpen(false)} />
     </>
   );
 }
