@@ -11,7 +11,6 @@ import Build from '@/components/Build';
 import Community from '@/components/Community';
 import AndroidMockup from '@/components/AndroidMockup';
 import Footer from '@/components/Footer';
-import SecureWalletStory from '@/components/sections/SecureWalletStory';
 
 const Hero = dynamic(() => import('@/components/Hero'), { ssr: false });
 
@@ -27,7 +26,6 @@ export default function Home() {
       <DocsSection />
       <Build />
       <Community />
-      <SecureWalletStory />
       <AndroidMockup />
       <Footer />
     </main>

@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { motion } from 'framer-motion';
+import FeatureStoryHub from '@/components/sections/FeatureStoryHub';
 
 import { GraduationCap, Wallet, CalendarDays, BarChart3, Layers, TrendingUp, Users, Lock, Cpu, ArrowRight, Shield, ExternalLink } from 'lucide-react';
 
@@ -75,131 +76,8 @@ export default function Features() {
         </div>
       </section>
 
-      {/* Feature Detail Panels */}
-      <section id="feature-secure-wallet" className="relative py-16 scroll-mt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass p-6 md:p-10 rounded-2xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 flex items-center justify-center"><Lock className="w-5 h-5 text-white" /></div>
-              <h3 className="text-xl md:text-2xl font-bold text-white">Secure Wallet</h3>
-            </div>
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
-              Your crypto, your keys. VERSE uses non-custodial wallets so you always control your funds. No third party can access your assets without your private key.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-              {[
-                'Non-custodial — you own your keys',
-                'Seed phrase backup for recovery',
-                'WalletConnect + browser extension support',
-                'Beware of phishing and fake token approvals',
-                'Always verify contract addresses before signing',
-                'Use hardware wallets for large holdings',
-              ].map((item, i) => (
-                <div key={i} className="flex items-start space-x-2 text-sm text-gray-400">
-                  <Shield className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" /><span>{item}</span>
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <a href="/academy#wallet-security" className="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-lg text-white text-sm font-medium hover:shadow-lg transition-all">
-                Learn Wallet Security
-              </a>
-              <a href="https://wallet.bitcoin.com/" target="_blank" rel="noopener noreferrer"
-                className="px-4 py-2 glass rounded-lg text-white text-sm font-medium hover:bg-white/10 transition-all flex items-center space-x-1">
-                <span>Download Bitcoin.com Wallet</span><ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <section id="feature-provably-fair" className="relative py-16 scroll-mt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass p-6 md:p-10 rounded-2xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-violet-500 to-purple-500 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-white" /></div>
-              <h3 className="text-xl md:text-2xl font-bold text-white">Provably Fair</h3>
-            </div>
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
-              Provably fair means the outcome of a game or reward distribution can be independently verified on the blockchain. No hidden manipulation.
-            </p>
-            <div className="glass p-4 rounded-xl mb-6">
-              <p className="text-xs text-gray-500 mb-2 font-semibold">How it works:</p>
-              <div className="flex items-center space-x-2 text-sm text-gray-300">
-                <span className="px-2 py-1 bg-purple-500/20 rounded text-purple-300 text-xs">Commit</span>
-                <span>→</span>
-                <span className="px-2 py-1 bg-blue-500/20 rounded text-blue-300 text-xs">Reveal</span>
-                <span>→</span>
-                <span className="px-2 py-1 bg-green-500/20 rounded text-green-300 text-xs">Verify</span>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <a href="/academy#how-blockchain-works" className="px-4 py-2 bg-gradient-to-r from-violet-500 to-purple-500 rounded-lg text-white text-sm font-medium hover:shadow-lg transition-all">
-                Learn Blockchain Verification
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="feature-community-hub" className="relative py-16 scroll-mt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass p-6 md:p-10 rounded-2xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-teal-500 to-cyan-500 flex items-center justify-center"><Users className="w-5 h-5 text-white" /></div>
-              <h3 className="text-xl md:text-2xl font-bold text-white">Community Hub</h3>
-            </div>
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
-              Join the Bitcoin.com and VERSE community. Connect with developers, traders, and builders worldwide.
-            </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-              {[
-                { name: 'Telegram', url: 'https://t.me/GetVerse/1/' },
-                { name: 'Discord', url: 'https://discord.com/invite/bitcoin-com/' },
-                { name: 'X (Twitter)', url: 'https://x.com/bitcoincom/' },
-                { name: 'LinkedIn', url: 'https://www.linkedin.com/company/bitcoin.com/' },
-              ].map((ch, i) => (
-                <a key={i} href={ch.url} target="_blank" rel="noopener noreferrer"
-                  className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center">
-                  <span className="text-sm text-gray-300">{ch.name}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="feature-developer-tools" className="relative py-16 scroll-mt-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="glass p-6 md:p-10 rounded-2xl">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-red-500 to-pink-500 flex items-center justify-center"><Cpu className="w-5 h-5 text-white" /></div>
-              <h3 className="text-xl md:text-2xl font-bold text-white">Developer Tools</h3>
-            </div>
-            <p className="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
-              Build dApps on Polygon using standard EVM tools. No proprietary SDK required.
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-              {[
-                { name: 'wagmi', desc: 'React hooks for Ethereum', url: 'https://wagmi.sh/' },
-                { name: 'viem', desc: 'TypeScript Ethereum library', url: 'https://viem.sh/' },
-                { name: 'Reown AppKit', desc: 'WalletConnect modal/QR', url: 'https://docs.reown.com/' },
-                { name: 'Polygon Docs', desc: 'Chain config & deployment', url: 'https://docs.polygon.technology/' },
-              ].map((tool, i) => (
-                <a key={i} href={tool.url} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors">
-                  <div><p className="text-sm text-white font-medium">{tool.name}</p><p className="text-xs text-gray-500">{tool.desc}</p></div>
-                  <ExternalLink className="w-4 h-4 text-gray-500" />
-                </a>
-              ))}
-            </div>
-            <a href="https://github.com/bitcoin-portal/verse-dex-tokens" target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 rounded-lg text-white text-sm font-medium hover:shadow-lg transition-all">
-              <span>VERSE Token List GitHub</span><ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
-        </div>
-      </section>
+      <FeatureStoryHub />
     </>
   );
 }

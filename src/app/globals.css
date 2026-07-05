@@ -54,3 +54,13 @@ html { scroll-behavior: smooth; }
 ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
 
 section { scroll-margin-top: 5rem; }
+
+/* Story orbit animation */
+@keyframes story-orbit {
+  from {
+    transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg);
+  }
+}
