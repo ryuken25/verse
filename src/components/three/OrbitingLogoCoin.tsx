@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useFrame } from '@react-three/fiber';
 import { useTexture } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -9,75 +9,104 @@ interface OrbitingLogoCoinProps {
   textureUrl: string;
   orbitRadius?: number;
   orbitSpeed?: number;
-  spinSpeed?: number;
+  spinSpeedY?: number;
+  spinSpeedX?: number;
+  spinSpeedZ?: number;
+  wobbleAmountX?: number;
+  wobbleAmountZ?: number;
+  wobbleSpeedX?: number;
+  wobbleSpeedZ?: number;
   size?: number;
   tilt?: [number, number, number];
   color?: string;
   emissiveColor?: string;
+  phase?: number;
 }
 
 export default function OrbitingLogoCoin({
   textureUrl,
   orbitRadius = 2.8,
   orbitSpeed = 0.35,
-  spinSpeed = 1.6,
+  spinSpeedY = 1.6,
+  spinSpeedX = 0.45,
+  spinSpeedZ = 0.25,
+  wobbleAmountX = 0.18,
+  wobbleAmountZ = 0.12,
+  wobbleSpeedX = 0.8,
+  wobbleSpeedZ = 0.6,
   size = 0.34,
   tilt = [0.4, 0, 0.2],
   color = '#7c3aed',
   emissiveColor = '#3b82f6',
+  phase = 0,
 }: OrbitingLogoCoinProps) {
-  const orbitRef = useRef<THREE.Group>(null);
-  const coinRef = useRef<THREE.Group>(null);
+  const orbitPlaneRef = useRef<THREE.Group>(null);
+  const orbitPositionRef = useRef<THREE.Group>(null);
+  const coinSpinRef = useRef<THREE.Group>(null);
   const texture = useTexture(textureUrl);
 
   useFrame((state, delta) => {
-    const t = state.clock.elapsedTime;
+    const t = state.clock.elapsedTime + phase;
 
-    // Orbit around globe
-    if (orbitRef.current) {
-      orbitRef.current.rotation.y += delta * orbitSpeed;
+    // 1. Orbit around globe
+    if (orbitPlaneRef.current) {
+      orbitPlaneRef.current.rotation.y = t * orbitSpeed;
     }
 
-    // Coin self-spin + wobble
-    if (coinRef.current) {
-      coinRef.current.rotation.y += delta * spinSpeed;
-      coinRef.current.rotation.x = Math.sin(t * 0.8) * 0.12;
-      coinRef.current.rotation.z = Math.cos(t * 0.6) * 0.08;
+    // 2. Coin local self-spin + wobble
+    if (coinSpinRef.current) {
+      // Y spin (main rotation)
+      coinSpinRef.current.rotation.y += delta * spinSpeedY;
+      // X tumble
+      coinSpinRef.current.rotation.x += delta * spinSpeedX * 0.25;
+      // Z tumble
+      coinSpinRef.current.rotation.z += delta * spinSpeedZ * 0.2;
+      // Wobble overlay
+      coinSpinRef.current.rotation.x += Math.sin(t * wobbleSpeedX) * wobbleAmountX * delta;
+      coinSpinRef.current.rotation.z += Math.cos(t * wobbleSpeedZ) * wobbleAmountZ * delta;
     }
   });
 
   return (
-    <group ref={orbitRef} rotation={tilt}>
-      <group position={[orbitRadius, 0, 0]} ref={coinRef}>
-        {/* Coin body */}
-        <mesh>
-          <cylinderGeometry args={[size, size, 0.045, 64]} />
-          <meshStandardMaterial
-            color={color}
-            metalness={0.6}
-            roughness={0.22}
-            emissive={emissiveColor}
-            emissiveIntensity={0.25}
-          />
-        </mesh>
+    <group ref={orbitPlaneRef} rotation={tilt}>
+      <group ref={orbitPositionRef} position={[orbitRadius, 0, 0]}>
+        <group ref={coinSpinRef}>
+          {/* Coin body — no shadow casting */}
+          <mesh castShadow={false} receiveShadow={false}>
+            <cylinderGeometry args={[size, size, 0.045, 64]} />
+            <meshStandardMaterial
+              color={color}
+              metalness={0.45}
+              roughness={0.22}
+              emissive={emissiveColor}
+              emissiveIntensity={0.25}
+            />
+          </mesh>
 
-        {/* Front face — logo */}
-        <mesh position={[0, 0.026, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[size * 0.88, 64]} />
-          <meshBasicMaterial map={texture} transparent side={THREE.FrontSide} />
-        </mesh>
+          {/* Front face — logo */}
+          <mesh position={[0, 0.026, 0]} rotation={[-Math.PI / 2, 0, 0]} castShadow={false} receiveShadow={false}>
+            <circleGeometry args={[size * 0.88, 64]} />
+            <meshBasicMaterial map={texture} transparent side={THREE.DoubleSide} />
+          </mesh>
 
-        {/* Back face — logo */}
-        <mesh position={[0, -0.026, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <circleGeometry args={[size * 0.88, 64]} />
-          <meshBasicMaterial map={texture} transparent side={THREE.FrontSide} />
-        </mesh>
+          {/* Back face — logo */}
+          <mesh position={[0, -0.026, 0]} rotation={[Math.PI / 2, 0, 0]} castShadow={false} receiveShadow={false}>
+            <circleGeometry args={[size * 0.88, 64]} />
+            <meshBasicMaterial map={texture} transparent side={THREE.DoubleSide} />
+          </mesh>
 
-        {/* Glow halo behind coin */}
-        <mesh position={[0, 0, -0.01]}>
-          <circleGeometry args={[size * 1.3, 32]} />
-          <meshBasicMaterial color={emissiveColor} transparent opacity={0.15} />
-        </mesh>
+          {/* Colored halo — additive blending, no shadow */}
+          <mesh scale={1.3} castShadow={false} receiveShadow={false}>
+            <circleGeometry args={[size, 32]} />
+            <meshBasicMaterial
+              color={emissiveColor}
+              transparent
+              opacity={0.16}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+            />
+          </mesh>
+        </group>
       </group>
     </group>
   );

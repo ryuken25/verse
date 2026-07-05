@@ -72,26 +72,25 @@ function IntroOverlay({ onComplete }: { onComplete: () => void }) {
 }
 
 export default function Hero() {
-  const [intro, setIntro] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
+  
   const reducedMotion = useReducedMotion();
 
-  useEffect(() => { setMounted(true); }, []);
 
   const go = useCallback((id: string) => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  if (!mounted) return <section id="home" className="min-h-screen bg-[#0a0e27]" />;
+  // No early return — intro renders immediately
 
   return (
     <>
       <AnimatePresence>
-        {intro && !reducedMotion && <IntroOverlay key="intro" onComplete={() => setIntro(false)} />}
+        {!introDone && !reducedMotion && <IntroOverlay key="intro" onComplete={() => setIntroDone(true)} />}
       </AnimatePresence>
 
-      <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 scroll-mt-24">
+      <section id="home" className={`relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 scroll-mt-24 ${!introDone ? 'opacity-0 pointer-events-none' : ''}`}>
         {/* 3D Scene */}
         {!reducedMotion && <HeroScene3D />}
 
@@ -104,29 +103,29 @@ export default function Hero() {
 
         {/* Content */}
         <div className="relative z-20 w-full max-w-5xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: intro ? 3.5 : 0 }}>
-            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: intro ? 3.8 : 0.3 }}
+          <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, delay: !introDone ? 3.5 : 0 }}>
+            <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: !introDone ? 3.8 : 0.3 }}
               className="inline-flex items-center space-x-2 px-4 py-2 rounded-full glass mb-6 md:mb-10">
               <Sparkles className="w-4 h-4 text-yellow-400" />
               <span className="text-xs md:text-sm text-gray-300">Powered by Bitcoin.com • 50K+ Community</span>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: intro ? 3.6 : 0.1 }} className="mb-6 md:mb-8">
+            <motion.div initial={{ opacity: 0, scale: 0.5 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: !introDone ? 3.6 : 0.1 }} className="mb-6 md:mb-8">
               <img src="/verse-logo.png" alt="VERSE" className="w-16 h-16 md:w-24 md:h-24 mx-auto object-contain" />
             </motion.div>
 
             <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 md:mb-6 leading-tight">
-              <motion.span className="gradient-text inline-block" initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: intro ? 4 : 0.2 }}>Build.</motion.span><br />
-              <motion.span className="text-white inline-block" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: intro ? 4.2 : 0.4 }}>Learn.</motion.span><br />
-              <motion.span className="gradient-text inline-block" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: intro ? 4.4 : 0.6 }}>Earn.</motion.span>
+              <motion.span className="gradient-text inline-block" initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: !introDone ? 4 : 0.2 }}>Build.</motion.span><br />
+              <motion.span className="text-white inline-block" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: !introDone ? 4.2 : 0.4 }}>Learn.</motion.span><br />
+              <motion.span className="gradient-text inline-block" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: !introDone ? 4.4 : 0.6 }}>Earn.</motion.span>
             </h1>
 
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: intro ? 4.6 : 0.8 }}
+            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: !introDone ? 4.6 : 0.8 }}
               className="text-base md:text-xl lg:text-2xl text-gray-400 max-w-2xl mx-auto mb-8 md:mb-12">
               The complete Web3 ecosystem — learn blockchain, trade tokens, join events, and build the decentralized future with VERSE.
             </motion.p>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: intro ? 4.8 : 1 }}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: !introDone ? 4.8 : 1 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
               <MagneticButton onClick={() => go('learn')}
                 className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm md:text-base shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center space-x-2 relative z-10">
@@ -138,7 +137,7 @@ export default function Hero() {
               </MagneticButton>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: intro ? 5.2 : 1.4 }}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: !introDone ? 5.2 : 1.4 }}
               className="mt-12 md:mt-20 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
               {[
                 { value: '50K+', label: 'Community Members', id: 'community' },
