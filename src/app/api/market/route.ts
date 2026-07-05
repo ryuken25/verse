@@ -1,67 +1,69 @@
 import { NextResponse } from 'next/server';
 
 let cache: { data: any; timestamp: number } | null = null;
-const CACHE_TTL = 60 * 1000; // 1 minute
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
 
-export async function GET() {
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get('page') || '1');
+  const perPage = parseInt(searchParams.get('per_page') || '50');
+
+  // Return cached data if fresh
   if (cache && Date.now() - cache.timestamp < CACHE_TTL) {
-    return NextResponse.json(cache.data);
+    // Filter from cache based on page
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const sliced = cache.data.coins.slice(start, end);
+    return NextResponse.json({
+      coins: sliced,
+      total: cache.data.coins.length,
+      page,
+      perPage,
+      hasMore: end < cache.data.coins.length,
+    });
   }
 
   try {
-    // CoinGecko IDs from official docs
-    const ids = 'bitcoin,ethereum,verse-bitcoin,polygon-ecosystem-token';
-    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd&include_24hr_change=true&include_market_cap=true&include_24hr_vol=true`;
+    // Fetch from CoinGecko /coins/markets
+    const url = `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false&price_change_percentage=24h,7d`;
 
     const res = await fetch(url, {
       headers: { 'User-Agent': 'VERSE-Bot/1.0' },
-      next: { revalidate: 60 },
+      next: { revalidate: 120 },
     });
 
     if (res.ok) {
       const data = await res.json();
-      const result = {
-        tokens: [
-          {
-            id: 'bitcoin', symbol: 'BTC', name: 'Bitcoin',
-            color: 'from-orange-500 to-yellow-500',
-            price: data.bitcoin?.usd ?? 0,
-            change24h: data.bitcoin?.usd_24h_change ?? 0,
-            marketCap: data.bitcoin?.usd_market_cap ?? 0,
-            volume24h: data.bitcoin?.usd_24h_vol ?? 0,
-          },
-          {
-            id: 'ethereum', symbol: 'ETH', name: 'Ethereum',
-            color: 'from-blue-500 to-purple-500',
-            price: data.ethereum?.usd ?? 0,
-            change24h: data.ethereum?.usd_24h_change ?? 0,
-            marketCap: data.ethereum?.usd_market_cap ?? 0,
-            volume24h: data.ethereum?.usd_24h_vol ?? 0,
-          },
-          {
-            id: 'verse-bitcoin', symbol: 'VERSE', name: 'Verse',
-            color: 'from-purple-500 to-blue-500',
-            price: data['verse-bitcoin']?.usd ?? 0,
-            change24h: data['verse-bitcoin']?.usd_24h_change ?? 0,
-            marketCap: data['verse-bitcoin']?.usd_market_cap ?? 0,
-            volume24h: data['verse-bitcoin']?.usd_24h_vol ?? 0,
-          },
-          {
-            id: 'polygon-ecosystem-token', symbol: 'POL', name: 'Polygon',
-            color: 'from-purple-600 to-indigo-600',
-            price: data['polygon-ecosystem-token']?.usd ?? 0,
-            change24h: data['polygon-ecosystem-token']?.usd_24h_change ?? 0,
-            marketCap: data['polygon-ecosystem-token']?.usd_market_cap ?? 0,
-            volume24h: data['polygon-ecosystem-token']?.usd_24h_vol ?? 0,
-          },
-        ],
-      };
-      cache = { data: result, timestamp: Date.now() };
-      return NextResponse.json(result);
+      const coins = data.map((coin: any) => ({
+        id: coin.id,
+        symbol: coin.symbol?.toUpperCase(),
+        name: coin.name,
+        price: coin.current_price ?? 0,
+        change24h: coin.price_change_percentage_24h ?? 0,
+        change7d: coin.price_change_percentage_7d_in_currency ?? 0,
+        marketCap: coin.market_cap ?? 0,
+        volume24h: coin.total_volume ?? 0,
+        image: coin.image ?? '',
+        rank: coin.market_cap_rank ?? 0,
+      }));
+
+      cache = { data: { coins }, timestamp: Date.now() };
+
+      const start = (page - 1) * perPage;
+      const end = start + perPage;
+      const sliced = coins.slice(start, end);
+
+      return NextResponse.json({
+        coins: sliced,
+        total: coins.length,
+        page,
+        perPage,
+        hasMore: end < coins.length,
+      });
     }
   } catch (e) {
     console.error('Market fetch failed:', e);
   }
 
-  return NextResponse.json({ tokens: [], error: 'Failed to fetch market data' });
+  return NextResponse.json({ coins: [], total: 0, page, perPage, hasMore: false, error: 'Failed to fetch market data' });
 }
