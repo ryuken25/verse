@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowDown, Sparkles, Zap, Globe, ChevronRight } from 'lucide-react';
+import { Sparkles, Zap, Globe, ChevronRight } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useReducedMotion } from '@/hooks/useReducedMotionSafe';
 import MagneticButton from '@/components/ui/MagneticButton';
@@ -155,12 +155,6 @@ export default function Hero() {
             </motion.div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, y: [0, 10, 0] }}
-            transition={{ delay: intro ? 6 : 2, duration: 2, repeat: Infinity }}
-            className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 cursor-pointer z-10"
-            onClick={() => go('features')}>
-            <ArrowDown className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
-          </motion.div>
         </div>
       </section>
     </>

@@ -2,54 +2,86 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ChevronRight, ChevronDown, Search, CheckCircle, Lock, Clock, Star, Award, Menu, X, ExternalLink, ArrowLeft, ArrowRight } from 'lucide-react';
+import { BookOpen, ChevronRight, ChevronDown, Search, CheckCircle, Lock, Clock, Star, Award, Menu, X, ExternalLink, ArrowLeft, ArrowRight, GraduationCap, Target } from 'lucide-react';
 import { useAccount } from 'wagmi';
 import { usePathname } from 'next/navigation';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { courses, type Course, type Module, type Lesson } from '@/data/courses';
 import { loadProgress, markLessonRead, submitQuiz, PASS_THRESHOLD, calcLevel, calcLevelProgress, XP_PASS_QUIZ } from '@/lib/progress';
+import { emitProgressUpdated } from '@/lib/progress-events';
 import ConnectWalletButton from '@/components/wallet/ConnectWalletButton';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
-// Hash alias map: homepage slugs → lesson IDs
+// Hash alias map
 const HASH_ALIASES: Record<string, string> = {
-  'crypto-basics': 'history-of-money',
-  'bitcoin-deep-dive': 'what-is-bitcoin',
-  'ethereum-evm': 'ethereum-vs-bitcoin',
-  'defi-basics': 'dex-and-amm',
-  'wallet-security': 'seed-phrase-safety',
-  'build-web3': 'connect-wallet',
-  'smart-contracts': 'setting-up',
-  'verse-ecosystem': 'what-is-defi',
+  'crypto-basics': 'what-is-blockchain',
+  'bitcoin-deep-dive': 'bitcoin-basics',
+  'ethereum-evm': 'ethereum-smart-contracts',
+  'defi-basics': 'understanding-defi',
+  'wallet-security': 'wallets-security',
+  'build-web3': 'solidity-basics',
+  'smart-contracts': 'solidity-basics',
+  'verse-ecosystem': 'understanding-defi',
 };
 
-// Find lesson by ID across all courses
-function findLesson(id: string): { course: Course; module: Module; lesson: Lesson; lessonIndex: number; moduleIndex: number; courseIndex: number } | null {
+// Node resolver
+type AcademyNode =
+  | { type: 'module'; course: Course; module: Module; courseIndex: number; moduleIndex: number }
+  | { type: 'lesson'; course: Course; module: Module; lesson: Lesson; courseIndex: number; moduleIndex: number; lessonIndex: number };
+
+function findAcademyNode(id: string): AcademyNode | null {
   for (let ci = 0; ci < courses.length; ci++) {
     for (let mi = 0; mi < courses[ci].modules.length; mi++) {
-      for (let li = 0; li < courses[ci].modules[mi].lessons.length; li++) {
-        if (courses[ci].modules[mi].lessons[li].id === id) {
-          return { course: courses[ci], module: courses[ci].modules[mi], lesson: courses[ci].modules[mi].lessons[li], lessonIndex: li, moduleIndex: mi, courseIndex: ci };
-        }
+      const mod = courses[ci].modules[mi];
+      if (mod.id === id) return { type: 'module', course: courses[ci], module: mod, courseIndex: ci, moduleIndex: mi };
+      for (let li = 0; li < mod.lessons.length; li++) {
+        if (mod.lessons[li].id === id) return { type: 'lesson', course: courses[ci], module: mod, lesson: mod.lessons[li], courseIndex: ci, moduleIndex: mi, lessonIndex: li };
       }
     }
   }
   return null;
 }
 
-// Get flat lesson list for prev/next
 function getFlatLessons(): Lesson[] {
   return courses.flatMap(c => c.modules.flatMap(m => m.lessons));
 }
 
 // ============================================================
+// Custom markdown components
+// ============================================================
+const markdownComponents = {
+  p: ({ children }: any) => <p className="text-gray-300 leading-8 text-[15px] md:text-base mb-5">{children}</p>,
+  strong: ({ children }: any) => (
+    <strong className="font-semibold text-white bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-300 bg-[length:100%_2px] bg-no-repeat bg-left-bottom pb-0.5">{children}</strong>
+  ),
+  h2: ({ children }: any) => <h2 className="mt-12 mb-5 text-2xl md:text-3xl font-bold text-white tracking-tight">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="mt-8 mb-3 text-xl font-semibold text-white">{children}</h3>,
+  table: ({ children }: any) => <div className="my-6 overflow-x-auto rounded-2xl border border-white/10"><table className="min-w-full divide-y divide-white/10 text-sm">{children}</table></div>,
+  th: ({ children }: any) => <th className="bg-white/5 px-4 py-3 text-left font-semibold text-white">{children}</th>,
+  td: ({ children }: any) => <td className="px-4 py-3 text-gray-300 align-top">{children}</td>,
+  ul: ({ children }: any) => <ul className="my-5 space-y-3 pl-0 list-none">{children}</ul>,
+  ol: ({ children }: any) => <ol className="my-5 space-y-3 pl-0 list-decimal list-inside">{children}</ol>,
+  li: ({ children }: any) => <li className="flex gap-3 text-gray-300 leading-7"><span className="mt-2 h-1.5 w-1.5 rounded-full bg-gradient-to-r from-purple-400 to-cyan-300 shrink-0" /><span>{children}</span></li>,
+  blockquote: ({ children }: any) => <blockquote className="my-6 rounded-2xl border border-purple-500/30 bg-purple-500/5 p-5 text-gray-300">{children}</blockquote>,
+  code: ({ inline, children, className }: any) => {
+    if (inline) return <code className="rounded-md bg-purple-500/10 px-1.5 py-0.5 text-purple-200 text-sm">{children}</code>;
+    return <pre className="my-6 overflow-x-auto rounded-2xl border border-white/10 bg-[#050816] p-4 text-sm text-gray-100"><code className={className}>{children}</code></pre>;
+  },
+};
+
+// ============================================================
 // Sidebar
 // ============================================================
-function Sidebar({ activeId, onSelect, search, onSearch, completed, onClose }: {
-  activeId: string | null; onSelect: (id: string) => void; search: string; onSearch: (q: string) => void;
-  completed: Set<string>; onClose?: () => void;
+function Sidebar({ activeId, onSelectModule, onSelectLesson, search, onSearch, completed, onClose }: {
+  activeId: string | null;
+  onSelectModule: (id: string) => void;
+  onSelectLesson: (id: string) => void;
+  search: string;
+  onSearch: (q: string) => void;
+  completed: Set<string>;
+  onClose?: () => void;
 }) {
   const [openCourses, setOpenCourses] = useState<Set<string>>(new Set([courses[0]?.id]));
   const [openModules, setOpenModules] = useState<Set<string>>(new Set());
@@ -66,7 +98,7 @@ function Sidebar({ activeId, onSelect, search, onSearch, completed, onClose }: {
       modules: c.modules.map(m => ({
         ...m,
         lessons: m.lessons.filter(l => l.title.toLowerCase().includes(q) || l.content.toLowerCase().includes(q)),
-      })).filter(m => m.lessons.length > 0),
+      })).filter(m => m.lessons.length > 0 || m.title.toLowerCase().includes(q)),
     })).filter(c => c.modules.length > 0);
   }, [search]);
 
@@ -91,18 +123,27 @@ function Sidebar({ activeId, onSelect, search, onSearch, completed, onClose }: {
               <div className="ml-2">
                 {course.modules.map(mod => (
                   <div key={mod.id}>
-                    <button type="button" onClick={() => toggle(openModules, mod.id, setOpenModules)}
-                      className="w-full flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs text-gray-400 hover:text-white hover:bg-white/5">
-                      <ChevronRight className={`w-3 h-3 transition-transform ${openModules.has(mod.id) ? 'rotate-90' : ''}`} />
-                      <span>{mod.title}</span>
-                    </button>
+                    <div className="flex items-center">
+                      {/* Module title — click opens overview */}
+                      <button type="button" onClick={() => { onSelectModule(mod.id); onClose?.(); }}
+                        className={`flex-1 text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${
+                          activeId === mod.id ? 'text-purple-300 bg-purple-600/20 font-medium' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                        }`}>
+                        {mod.title}
+                      </button>
+                      {/* Chevron — expand/collapse only */}
+                      <button type="button" onClick={(e) => { e.stopPropagation(); toggle(openModules, mod.id, setOpenModules); }}
+                        className="p-1 rounded hover:bg-white/10" aria-label="Toggle lessons">
+                        <ChevronDown className={`w-3 h-3 text-gray-500 transition-transform ${openModules.has(mod.id) ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
                     {openModules.has(mod.id) && (
                       <div>
                         {mod.lessons.map(lesson => {
                           const isActive = activeId === lesson.id;
                           const done = completed.has(lesson.id);
                           return (
-                            <button key={lesson.id} type="button" onClick={() => { onSelect(lesson.id); onClose?.(); }}
+                            <button key={lesson.id} type="button" onClick={() => { onSelectLesson(lesson.id); onClose?.(); }}
                               className={`w-full flex items-center space-x-2 px-6 py-2 rounded-lg text-xs transition-colors ${
                                 isActive ? 'bg-purple-600/20 text-purple-300 border-l-2 border-purple-500' :
                                 done ? 'text-green-400 hover:bg-white/5' : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
@@ -126,50 +167,151 @@ function Sidebar({ activeId, onSelect, search, onSearch, completed, onClose }: {
 }
 
 // ============================================================
-// Reader with react-markdown
+// Module Overview
 // ============================================================
-function Reader({ lesson, onStartQuiz, completed, progress, onNext, onPrev, hasNext, hasPrev }: {
-  lesson: Lesson; onStartQuiz: (l: Lesson) => void; completed: Set<string>;
+function ModuleOverview({ course, module: mod, completed, onSelectLesson }: {
+  course: Course; module: Module; completed: Set<string>; onSelectLesson: (id: string) => void;
+}) {
+  return (
+    <div className="max-w-3xl mx-auto">
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 md:p-8 mb-8 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-blue-600/5 to-cyan-500/10 pointer-events-none" />
+        <div className="relative z-10">
+          <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-300 mb-3 inline-block">{course.title}</span>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">{mod.title}</h1>
+          <p className="text-gray-400 text-sm md:text-base">{mod.description}</p>
+        </div>
+      </div>
+
+      {/* Overview content */}
+      {mod.overviewContent && (
+        <div className="mb-8">
+          <div className="prose prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{mod.overviewContent}</ReactMarkdown>
+          </div>
+        </div>
+      )}
+
+      {/* Learning goals */}
+      {mod.learningGoals && mod.learningGoals.length > 0 && (
+        <div className="glass p-5 rounded-2xl mb-8">
+          <h3 className="text-lg font-semibold text-white mb-4 flex items-center"><Target className="w-5 h-5 mr-2 text-purple-400" /> Learning Goals</h3>
+          <ul className="space-y-2">
+            {mod.learningGoals.map((g, i) => (
+              <li key={i} className="flex items-start space-x-2 text-sm text-gray-300">
+                <CheckCircle className="w-4 h-4 text-purple-400 flex-shrink-0 mt-0.5" /><span>{g}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Lesson list */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-semibold text-white mb-4">Lessons in this module</h3>
+        {mod.lessons.map((lesson, i) => {
+          const done = completed.has(lesson.id);
+          return (
+            <button key={lesson.id} type="button" onClick={() => onSelectLesson(lesson.id)}
+              className="w-full text-left glass p-4 rounded-xl hover:border-purple-500/30 transition-all flex items-center space-x-4 group">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold ${done ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-gray-400'}`}>
+                {done ? <CheckCircle className="w-5 h-5" /> : String(i + 1).padStart(2, '0')}
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-medium text-sm group-hover:text-purple-300 transition-colors">{lesson.title}</p>
+                {lesson.summary && <p className="text-gray-500 text-xs mt-1">{lesson.summary}</p>}
+                <div className="flex items-center space-x-3 mt-1">
+                  {lesson.estimatedMinutes && <span className="text-[10px] text-gray-500 flex items-center"><Clock className="w-3 h-3 mr-1" />{lesson.estimatedMinutes} min</span>}
+                  {lesson.difficulty && <span className="text-[10px] text-gray-500">{lesson.difficulty}</span>}
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-purple-400 transition-colors" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Quiz Prep Card
+// ============================================================
+function QuizPrepCard({ items }: { items: string[] }) {
+  if (!items?.length) return null;
+  return (
+    <div className="my-8 rounded-2xl border border-purple-400/20 bg-purple-500/10 p-5">
+      <h3 className="mb-3 text-lg font-semibold text-white flex items-center"><GraduationCap className="w-5 h-5 mr-2 text-purple-400" /> Before you start the quiz</h3>
+      <p className="text-sm text-gray-400 mb-3">Make sure you can explain:</p>
+      <ul className="space-y-2">
+        {items.map((item, i) => (
+          <li key={i} className="flex gap-3 text-sm text-gray-300">
+            <span className="text-cyan-300 mt-0.5">✓</span><span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ============================================================
+// Reader
+// ============================================================
+function Reader({ lesson, module: mod, onStartQuiz, completed, progress, onNext, onPrev, hasNext, hasPrev }: {
+  lesson: Lesson; module: Module; onStartQuiz: (l: Lesson) => void; completed: Set<string>;
   progress: any; onNext: () => void; onPrev: () => void; hasNext: boolean; hasPrev: boolean;
 }) {
   const done = completed.has(lesson.id);
-  const ref = useRef<HTMLDivElement>(null);
 
-  // Mark as read
   useEffect(() => {
     if (progress?.address) markLessonRead(progress.address, lesson.id);
   }, [lesson.id, progress?.address]);
 
   return (
-    <div ref={ref} className="max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-white mb-3">{lesson.title}</h1>
-        {done && <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 inline-flex items-center"><CheckCircle className="w-3 h-3 mr-1" />Completed</span>}
+    <div className="max-w-3xl mx-auto">
+      {/* Lesson hero */}
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] p-6 md:p-8 mb-8 shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-blue-600/5 to-cyan-500/10 pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-xs px-2 py-1 rounded-full bg-purple-500/20 text-purple-300">{mod.title}</span>
+            {lesson.difficulty && <span className="text-xs px-2 py-1 rounded-full bg-blue-500/20 text-blue-300">{lesson.difficulty}</span>}
+            {done && <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 flex items-center"><CheckCircle className="w-3 h-3 mr-1" />Completed</span>}
+          </div>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{lesson.title}</h1>
+          {lesson.summary && <p className="text-gray-400 text-sm md:text-base mb-3">{lesson.summary}</p>}
+          <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500">
+            {lesson.estimatedMinutes && <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{lesson.estimatedMinutes} min read</span>}
+            <span className="flex items-center"><Award className="w-3 h-3 mr-1" />+20 XP for reading</span>
+            {lesson.quiz.length > 0 && <span className="flex items-center"><Star className="w-3 h-3 mr-1" />+100 XP for quiz</span>}
+          </div>
+        </div>
       </div>
 
-      {/* Content with react-markdown */}
-      <div className="prose prose-invert prose-purple max-w-none mb-8
-        prose-headings:text-white prose-headings:font-bold
-        prose-p:text-gray-300 prose-p:leading-relaxed prose-p:text-sm md:prose-p:text-base
-        prose-li:text-gray-300 prose-li:text-sm md:prose-li:text-base
-        prose-strong:text-white
-        prose-code:text-purple-300 prose-code:bg-white/5 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-        prose-pre:bg-white/5 prose-pre:border prose-pre:border-white/10
-        prose-a:text-purple-400 hover:prose-a:text-purple-300
-        prose-blockquote:border-purple-500/30 prose-blockquote:bg-purple-500/5 prose-blockquote:rounded-xl
-        prose-table:text-sm
-        prose-th:text-white prose-th:font-semibold
-        prose-td:text-gray-300">
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>{lesson.content}</ReactMarkdown>
+      {/* Key ideas */}
+      {lesson.keyIdeas && lesson.keyIdeas.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {lesson.keyIdeas.map((idea, i) => (
+            <span key={i} className="text-xs px-3 py-1.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">{idea}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="mb-8">
+        <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{lesson.content}</ReactMarkdown>
       </div>
+
+      {/* Quiz prep */}
+      {lesson.quizPrep && <QuizPrepCard items={lesson.quizPrep} />}
 
       {/* Quiz CTA */}
       {lesson.quiz.length > 0 && (
         <div className="glass p-6 rounded-xl text-center mb-8">
           <Award className="w-8 h-8 text-yellow-400 mx-auto mb-3" />
           <h3 className="text-lg font-bold text-white mb-2">{done ? 'Quiz Completed' : 'Ready for the Quiz?'}</h3>
-          <p className="text-sm text-gray-400 mb-4">{done ? 'You have already passed this quiz.' : `Test your knowledge. ${PASS_THRESHOLD}% to pass. Wallet connection required.`}</p>
+          <p className="text-sm text-gray-400 mb-4">{done ? 'You have already passed this quiz.' : `${PASS_THRESHOLD}% required to pass. Wallet connection required.`}</p>
           <button type="button" onClick={() => onStartQuiz(lesson)} disabled={done}
             className={`px-6 py-3 rounded-xl font-semibold text-sm transition-all active:scale-95 ${done ? 'bg-green-600/20 text-green-400 cursor-default' : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:shadow-lg hover:shadow-purple-500/25'}`}>
             {done ? '✓ Quiz Passed' : 'Start Quiz'}
@@ -193,52 +335,45 @@ function Reader({ lesson, onStartQuiz, completed, progress, onNext, onPrev, hasN
 }
 
 // ============================================================
-// Quiz Modal (fixed scoring + shuffle)
+// Quiz Modal (same as before, with attempt model)
 // ============================================================
 function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: () => void; onComplete: (id: string, score: number, firstTry: boolean) => void }) {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const [started, setStarted] = useState(false);
   const [currentQ, setCurrentQ] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [answers, setAnswers] = useState<(number | null)[]>([]);
 
-  // Shuffle questions and options on start
   const shuffled = useMemo(() => {
     return lesson.quiz.map(q => {
       const options = [...q.options];
       const correctAnswer = options[q.correctIndex];
-      // Fisher-Yates shuffle
       for (let i = options.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [options[i], options[j]] = [options[j], options[i]];
       }
-      const newCorrectIndex = options.indexOf(correctAnswer);
-      return { ...q, options, correctIndex: newCorrectIndex };
+      return { ...q, options, correctIndex: options.indexOf(correctAnswer) };
     });
-  }, [lesson.id, started]); // Re-shuffle on retry
+  }, [lesson.id, started]);
 
   const q = shuffled[currentQ];
   const isCorrect = selected === q.correctIndex;
-  const [answers, setAnswers] = useState<(number | null)[]>([]);
 
   const handleSelect = (idx: number) => {
     if (showResult) return;
     setSelected(idx);
     setShowResult(true);
-    const a = [...answers];
-    a[currentQ] = idx;
-    setAnswers(a);
+    const a = [...answers]; a[currentQ] = idx; setAnswers(a);
   };
 
   const handleNext = () => {
     if (currentQ < shuffled.length - 1) {
-      setCurrentQ(currentQ + 1);
-      setSelected(null);
-      setShowResult(false);
+      setCurrentQ(currentQ + 1); setSelected(null); setShowResult(false);
     } else {
-      // Finish quiz
-      const correct = answers.filter((a, i) => a === shuffled[i].correctIndex).length;
+      const finalAnswers = [...answers]; finalAnswers[currentQ] = selected;
+      const correct = finalAnswers.filter((a, i) => a === shuffled[i].correctIndex).length;
       const score = Math.round((correct / shuffled.length) * 100);
       setFinished(true);
       onComplete(lesson.id, score, true);
@@ -246,19 +381,13 @@ function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: (
   };
 
   const handleRetry = () => {
-    setCurrentQ(0);
-    setSelected(null);
-    setShowResult(false);
-    setFinished(false);
-    setAnswers([]);
-    // Re-shuffle by toggling started
-    setStarted(false);
-    setTimeout(() => setStarted(true), 0);
+    setCurrentQ(0); setSelected(null); setShowResult(false); setFinished(false); setAnswers([]);
+    setStarted(false); setTimeout(() => setStarted(true), 0);
   };
 
   if (!isConnected) return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass p-8 rounded-t-2xl sm:rounded-2xl max-w-md w-full text-center">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#101322]/95 border border-white/15 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
         <Lock className="w-12 h-12 text-purple-400 mx-auto mb-4" />
         <h3 className="text-xl font-bold text-white mb-2">Connect Wallet Required</h3>
         <p className="text-gray-400 text-sm mb-6">Connect your wallet to take quizzes and earn XP.</p>
@@ -269,13 +398,13 @@ function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: (
   );
 
   if (finished) {
-    const correct = answers.filter((a, i) => a === shuffled[i].correctIndex).length;
+    const finalAnswers = [...answers]; finalAnswers[currentQ] = selected;
+    const correct = finalAnswers.filter((a, i) => a === shuffled[i].correctIndex).length;
     const score = Math.round((correct / shuffled.length) * 100);
     const passed = score >= PASS_THRESHOLD;
-
     return (
-      <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-        <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass p-8 rounded-t-2xl sm:rounded-2xl max-w-md w-full text-center">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#101322]/95 border border-white/15 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
           <div className={`w-20 h-20 rounded-full mx-auto mb-4 flex items-center justify-center ${passed ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
             {passed ? <Award className="w-10 h-10 text-green-400" /> : <Star className="w-10 h-10 text-red-400" />}
           </div>
@@ -299,10 +428,9 @@ function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: (
     );
   }
 
-  // Quiz questions
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <motion.div initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="glass p-6 md:p-8 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-[#101322]/95 border border-white/15 p-6 md:p-8 rounded-2xl w-full sm:max-w-lg max-h-[90dvh] overflow-y-auto shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <div><p className="text-xs text-gray-400">Quiz • {lesson.title}</p><p className="text-sm text-purple-400">Question {currentQ + 1} of {shuffled.length}</p></div>
           <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-white/10"><X className="w-5 h-5 text-gray-400" /></button>
@@ -333,13 +461,11 @@ function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: (
         )}
         {showResult && (
           <button type="button" onClick={handleNext} className="w-full py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold active:scale-95">
-            {currentQ < shuffled.length - 1 ? 'Next' : 'Finish Quiz'}
+            {currentQ < shuffled.length - 1 ? 'Next Question' : 'Submit Attempt'}
           </button>
         )}
         {!showResult && (
-          <button type="button" disabled className="w-full py-3 bg-white/5 rounded-xl text-gray-500 font-semibold cursor-not-allowed">
-            Select an answer
-          </button>
+          <button type="button" disabled className="w-full py-3 bg-white/5 rounded-xl text-gray-500 font-semibold cursor-not-allowed">Select an answer</button>
         )}
       </motion.div>
     </div>
@@ -347,7 +473,7 @@ function QuizModal({ lesson, onClose, onComplete }: { lesson: Lesson; onClose: (
 }
 
 // ============================================================
-// Main Academy Layout
+// Main Academy
 // ============================================================
 export default function AcademyLayout() {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -362,67 +488,67 @@ export default function AcademyLayout() {
     return new Set(Object.values(progress?.lessons || {}).filter((l: any) => l.quizPassed).map((l: any) => l.lessonId));
   }, [progress]);
 
-  // Load progress
   useEffect(() => {
     const addr = isConnected && address ? address : 'guest';
     setProgress(loadProgress(addr));
   }, [isConnected, address]);
 
-  // Resolve hash
+  // Resolve hash — default to first module overview
   useEffect(() => {
     const hash = window.location.hash.slice(1);
     if (hash) {
-      // Try alias first
-      const resolved = HASH_ALIASES[hash] || hash;
-      setActiveId(resolved);
+      setActiveId(HASH_ALIASES[hash] || hash);
     } else {
-      const first = courses[0]?.modules[0]?.lessons[0];
-      if (first) setActiveId(first.id);
+      setActiveId(courses[0]?.modules[0]?.id ?? null);
     }
   }, []);
 
-  // Update URL hash
-  useEffect(() => {
-    if (activeId) window.history.replaceState(null, '', `#${activeId}`);
-  }, [activeId]);
+  useEffect(() => { if (activeId) window.history.replaceState(null, '', `#${activeId}`); }, [activeId]);
 
+  const selectModule = useCallback((id: string) => { setActiveId(id); window.scrollTo({ top: 0, behavior: 'smooth' }); }, []);
   const selectLesson = useCallback((id: string) => {
-    setActiveId(id);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Refresh progress
+    setActiveId(id); window.scrollTo({ top: 0, behavior: 'smooth' });
     const addr = isConnected && address ? address : 'guest';
     setProgress(loadProgress(addr));
   }, [isConnected, address]);
 
-  // Flat lessons for prev/next
   const flatLessons = useMemo(() => getFlatLessons(), []);
-  const currentIndex = flatLessons.findIndex(l => l.id === activeId);
-  const hasNext = currentIndex < flatLessons.length - 1;
-  const hasPrev = currentIndex > 0;
+  const activeNode = activeId ? findAcademyNode(activeId) : null;
 
-  const handleNext = useCallback(() => {
-    if (hasNext) selectLesson(flatLessons[currentIndex + 1].id);
-  }, [currentIndex, hasNext, flatLessons, selectLesson]);
+  // For prev/next, only consider lessons
+  const currentLessonIndex = activeNode?.type === 'lesson' ? flatLessons.findIndex(l => l.id === activeNode.lesson.id) : -1;
+  const hasNext = currentLessonIndex < flatLessons.length - 1;
+  const hasPrev = currentLessonIndex > 0;
 
-  const handlePrev = useCallback(() => {
-    if (hasPrev) selectLesson(flatLessons[currentIndex - 1].id);
-  }, [currentIndex, hasPrev, flatLessons, selectLesson]);
+  const handleNext = useCallback(() => { if (hasNext) selectLesson(flatLessons[currentLessonIndex + 1].id); }, [currentLessonIndex, hasNext, flatLessons, selectLesson]);
+  const handlePrev = useCallback(() => { if (hasPrev) selectLesson(flatLessons[currentLessonIndex - 1].id); }, [currentLessonIndex, hasPrev, flatLessons, selectLesson]);
 
   const handleQuizComplete = useCallback((lessonId: string, score: number, firstTry: boolean) => {
     const addr = isConnected && address ? address : 'guest';
-    const updated = submitQuiz(addr, lessonId, score, firstTry);
-    setProgress(updated);
+    const oldProgress = loadProgress(addr);
+    const result = submitQuiz(addr, lessonId, score, firstTry);
+    setProgress(result.progress);
+    if (result.deltaXP > 0) {
+      emitProgressUpdated({
+        address: addr,
+        oldProgress,
+        newProgress: result.progress,
+        deltaXP: result.deltaXP,
+        oldLevel: calcLevel(oldProgress.totalXP),
+        newLevel: result.progress.level,
+        leveledUp: result.leveledUp,
+        lessonId,
+        reason: 'quiz_passed',
+      });
+    }
     setQuizLesson(null);
   }, [isConnected, address]);
-
-  const activeLesson = activeId ? findLesson(activeId) : null;
 
   return (
     <div className="min-h-screen bg-[#0a0e27]">
       <Navbar />
       {quizLesson && <QuizModal lesson={quizLesson} onClose={() => setQuizLesson(null)} onComplete={handleQuizComplete} />}
 
-      {/* Mobile sidebar toggle */}
       <div className="lg:hidden fixed bottom-4 right-4 z-40">
         <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)}
           className="w-12 h-12 rounded-full bg-purple-600 text-white flex items-center justify-center shadow-lg active:scale-95">
@@ -432,23 +558,30 @@ export default function AcademyLayout() {
 
       <div className="pt-16 md:pt-20 flex">
         <aside className={`fixed lg:sticky top-16 md:top-20 left-0 h-[calc(100vh-4rem)] w-72 bg-[#0a0e27]/95 backdrop-blur-xl border-r border-white/5 z-30 transition-transform lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <Sidebar activeId={activeId} onSelect={selectLesson} search={search} onSearch={setSearch} completed={completed} onClose={() => setSidebarOpen(false)} />
+          <Sidebar activeId={activeId} onSelectModule={selectModule} onSelectLesson={selectLesson} search={search} onSearch={setSearch} completed={completed} onClose={() => setSidebarOpen(false)} />
         </aside>
         {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         <main className="flex-1 min-w-0 p-6 md:p-10 lg:p-12">
-          {/* Hero */}
-          <div className="mb-10">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full glass mb-4">
-              <BookOpen className="w-4 h-4 text-purple-400" /><span className="text-xs text-gray-300">VERSE Academy • Free Learning</span>
+          {/* Reading progress */}
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-2">
+              <span>Progress: {completed.size} lessons completed</span>
+              <span>{progress?.totalXP ?? 0} XP</span>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Learn Web3</h1>
-            <p className="text-gray-400 text-sm md:text-base max-w-2xl">Master blockchain, DeFi, and Web3. All materials free. Wallet only for quizzes, certificates, and rewards.</p>
+            <div className="w-full bg-white/5 rounded-full h-1">
+              <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-1 rounded-full transition-all"
+                style={{ width: `${flatLessons.length > 0 ? (completed.size / flatLessons.length) * 100 : 0}%` }} />
+            </div>
           </div>
 
-          {activeLesson ? (
+          {activeNode?.type === 'module' && (
+            <ModuleOverview course={activeNode.course} module={activeNode.module} completed={completed} onSelectLesson={selectLesson} />
+          )}
+          {activeNode?.type === 'lesson' && (
             <Reader
-              lesson={activeLesson.lesson}
+              lesson={activeNode.lesson}
+              module={activeNode.module}
               onStartQuiz={setQuizLesson}
               completed={completed}
               progress={progress}
@@ -457,13 +590,14 @@ export default function AcademyLayout() {
               hasNext={hasNext}
               hasPrev={hasPrev}
             />
-          ) : (
+          )}
+          {!activeNode && (
             <div className="text-center py-20">
               <BookOpen className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-400 mb-4">Select a lesson from the sidebar to begin.</p>
-              <button type="button" onClick={() => selectLesson(courses[0]?.modules[0]?.lessons[0]?.id || '')}
+              <p className="text-gray-400 mb-4">Select a module or lesson from the sidebar.</p>
+              <button type="button" onClick={() => selectModule(courses[0]?.modules[0]?.id || '')}
                 className="px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm">
-                Start with first lesson
+                Start with first module
               </button>
             </div>
           )}

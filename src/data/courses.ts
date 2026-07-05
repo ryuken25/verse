@@ -10,12 +10,20 @@ export interface Lesson {
   title: string;
   content: string;
   quiz: QuizQuestion[];
+  summary?: string;
+  estimatedMinutes?: number;
+  difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
+  keyIdeas?: string[];
+  quizPrep?: string[];
 }
 
 export interface Module {
   id: string;
   title: string;
   description: string;
+  overviewContent?: string;
+  learningGoals?: string[];
+  keyIdeas?: string[];
   lessons: Lesson[];
 }
 
@@ -54,10 +62,60 @@ export const courses: Course[] = [
         id: 'what-is-blockchain',
         title: 'What is Blockchain?',
         description: 'Understand the foundational technology behind cryptocurrency and how distributed ledgers work.',
+        overviewContent: `# What is Blockchain?
+
+Before learning wallets, DeFi, NFTs, or smart contracts, you need one core idea: **a blockchain is a shared record that many computers verify together**.
+
+A normal app usually has one company-controlled database. Your bank, exchange, or social media platform owns the server, decides who can edit records, and can freeze or reverse access. A blockchain changes that model. It lets a network agree on one shared history without depending on one central company.
+
+## What you will learn
+
+By the end of this module, you should be able to explain:
+
+- **Why money evolved** from barter to fiat and then to Bitcoin.
+- **What a block contains** and why blocks are linked by hashes.
+- **Why immutability matters** for transaction history.
+- **How nodes verify transactions** without trusting one company.
+- **What consensus means** and why networks need it.
+- **Why blockchain is useful** beyond just sending coins.
+
+## Mental model
+
+Think of a blockchain like a public notebook copied across thousands of computers.
+
+If one person tries to edit their notebook dishonestly, everyone else can compare copies and reject the fake version. The network does not trust one person. It trusts **rules, cryptography, and consensus**.
+
+## Recommended order
+
+1. Start with **History of Money** to understand the problem crypto tries to solve.
+2. Continue to **How Blockchain Works** to learn blocks, hashes, nodes, and transactions.
+3. Finish with **Consensus Mechanisms** to understand how decentralized networks agree.
+
+## Why this module matters
+
+Most crypto mistakes happen because people skip the basics. They buy tokens before understanding wallets, trust, keys, fees, or confirmations. This module gives you the foundation to think clearly before using real money.`,
+        learningGoals: [
+          'Explain why money evolved from barter to Bitcoin',
+          'Describe what a block contains and how hashes link blocks',
+          'Explain why immutability matters for transaction history',
+          'Describe how nodes verify transactions without trusting one company',
+          'Explain what consensus means and why networks need it',
+        ],
+        keyIdeas: ['blockchain', 'hash', 'block', 'node', 'consensus', 'immutability', 'distributed ledger'],
         lessons: [
           {
             id: 'history-of-money',
             title: 'History of Money',
+            summary: 'Why people created money and why Bitcoin matters in the evolution of value exchange.',
+            estimatedMinutes: 12,
+            difficulty: 'Beginner' as const,
+            keyIdeas: ['barter', 'commodity money', 'fiat money', 'gold standard', 'Bitcoin', 'double coincidence of wants'],
+            quizPrep: [
+              'Explain what "double coincidence of wants" means in barter',
+              'List the key properties of good money (durability, portability, divisibility, scarcity)',
+              'Describe why fiat money differs from gold-backed currency',
+              'Explain what Bitcoin introduced that previous forms of money lacked',
+            ],
             content: `## The Evolution of Money
 
 Money has been one of humanity's most important inventions, evolving dramatically over thousands of years. Understanding this history helps us grasp why cryptocurrency represents such a significant innovation.
