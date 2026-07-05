@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 import { ReactNode } from 'react';
 
-type OrbitNode = {
+export type OrbitNode = {
   id: string;
   title: string;
   subtitle?: string;
@@ -24,6 +24,8 @@ type AnnotatedOrbitVisualProps = {
   nodes: OrbitNode[];
   activeNodeId?: string;
   theme?: 'wallet' | 'fair' | 'community' | 'devtools';
+  compact?: boolean;
+  paused?: boolean;
 };
 
 const themeColors = {
@@ -54,6 +56,8 @@ export default function AnnotatedOrbitVisual({
   nodes,
   activeNodeId,
   theme = 'wallet',
+  compact = false,
+  paused = false,
 }: AnnotatedOrbitVisualProps) {
   const [time, setTime] = useState(0);
   const colors = themeColors[theme];

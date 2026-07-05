@@ -105,3 +105,8 @@ section { scroll-margin-top: 5rem; }
   .max-md\:blur-sm { filter: blur(4px); }
   .max-md\:blur-2xl { filter: blur(24px); }
 }
+
+.cv-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 900px;
+}

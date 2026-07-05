@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Zap, Globe, ChevronRight } from 'lucide-react';
+import AcademyLink from '@/components/navigation/AcademyLink';
 import dynamic from 'next/dynamic';
 import { useReducedMotion } from '@/hooks/useReducedMotionSafe';
 import MagneticButton from '@/components/ui/MagneticButton';
@@ -131,10 +132,12 @@ export default function Hero() {
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: !introDone ? 4.8 : 1 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
-              <MagneticButton onClick={() => go('learn')}
-                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm md:text-base shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center space-x-2 relative z-10">
+              <AcademyLink
+                href="/academy#what-is-blockchain"
+                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm md:text-base shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center space-x-2 relative z-10"
+              >
                 <Zap className="w-4 h-4 md:w-5 md:h-5" /><span>Start Learning</span><ChevronRight className="w-4 h-4" />
-              </MagneticButton>
+              </AcademyLink>
               <MagneticButton onClick={() => go('features')}
                 className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 glass rounded-xl text-white font-semibold text-sm md:text-base hover:bg-white/10 transition-all flex items-center justify-center space-x-2 relative z-10">
                 <Globe className="w-4 h-4 md:w-5 md:h-5" /><span>Explore Ecosystem</span>
