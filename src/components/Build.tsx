@@ -1,15 +1,15 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Code, Terminal, FileCode, Globe, Layers, Wallet, ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, ExternalLink, ArrowLeftRight, Droplets, Sprout, Lock, BarChart3, FileText } from 'lucide-react';
 
 const tools = [
-  { icon: Code, name: 'VERSE SDK', desc: 'JavaScript/TypeScript SDK for building dApps on VERSE ecosystem' },
-  { icon: Terminal, name: 'CLI Tools', desc: 'Command-line tools for deploying and managing smart contracts' },
-  { icon: FileCode, name: 'Smart Contracts', desc: 'Pre-audited contract templates for DeFi, NFTs, and DAOs' },
-  { icon: Globe, name: 'API Gateway', desc: 'RESTful APIs for accessing VERSE network data and analytics' },
-  { icon: Layers, name: 'Component Library', desc: 'React components for Web3 UI — wallet connect, token display, swaps' },
-  { icon: Wallet, name: 'Wallet Integration', desc: 'MetaMask, WalletConnect, and Coinbase Wallet support out of the box' },
+  { icon: ArrowLeftRight, name: 'Verse DEX Swap', desc: 'Swap tokens on the VERSE decentralized exchange', url: 'https://verse.bitcoin.com/swap/' },
+  { icon: Droplets, name: 'Liquidity Pools', desc: 'Provide liquidity and earn fees on VERSE pools', url: 'https://verse.bitcoin.com/pools/' },
+  { icon: Sprout, name: 'VERSE Farms', desc: 'Stake LP tokens and earn VERSE rewards', url: 'https://verse.bitcoin.com/farms/' },
+  { icon: Lock, name: 'VERSE Staking', desc: 'Stake VERSE tokens and earn yield', url: 'https://verse.bitcoin.com/staking/' },
+  { icon: BarChart3, name: 'Analytics', desc: 'Track TVL, volume, and protocol metrics', url: 'https://analytics.verse.bitcoin.com/' },
+  { icon: FileText, name: 'Whitepaper', desc: 'Read the VERSE whitepaper and tokenomics', url: 'https://www.getverse.com/verse-whitepaper.pdf' },
 ];
 
 export default function Build() {
@@ -21,32 +21,44 @@ export default function Build() {
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12 md:mb-20">
           <h2 className="text-3xl md:text-5xl font-bold mb-4 md:mb-6">Build on <span className="gradient-text">VERSE</span></h2>
-          <p className="text-base md:text-xl text-gray-400 max-w-3xl mx-auto">Powerful tools and infrastructure to bring your Web3 ideas to life</p>
+          <p className="text-base md:text-xl text-gray-400 max-w-3xl mx-auto">Explore the VERSE ecosystem — swap, stake, farm, and build</p>
         </motion.div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-12">
           {tools.map((tool, i) => (
-            <motion.div key={i} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }} whileHover={{ y: -5 }} className="group">
+            <motion.a key={i} href={tool.url} target="_blank" rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
+              whileHover={{ y: -5 }} className="group block">
               <div className="glass p-5 md:p-8 rounded-xl md:rounded-2xl h-full hover:border-green-500/30 transition-all duration-300">
                 <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform">
                   <tool.icon className="w-5 h-5 md:w-7 md:h-7 text-white" />
                 </div>
                 <h3 className="text-lg md:text-xl font-semibold text-white mb-2 md:mb-3">{tool.name}</h3>
                 <p className="text-sm md:text-base text-gray-400 mb-4">{tool.desc}</p>
-                <a href="https://github.com/ryuken25/verse" target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center text-green-400 hover:text-green-300 transition-colors text-sm">
-                  <span>View docs</span><ExternalLink className="w-4 h-4 ml-2" />
-                </a>
+                <div className="flex items-center text-green-400 text-sm group-hover:text-green-300 transition-colors">
+                  <span>Open</span><ExternalLink className="w-4 h-4 ml-2" />
+                </div>
               </div>
-            </motion.div>
+            </motion.a>
           ))}
         </div>
 
-        <motion.div initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} className="text-center">
-          <a href="https://github.com/ryuken25/verse" target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center space-x-2 px-8 py-4 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl text-white font-semibold hover:shadow-lg hover:shadow-green-500/30 transition-all active:scale-95">
-            <span>Start Building</span><ArrowRight className="w-5 h-5" />
-          </a>
+        {/* Additional links */}
+        <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass p-6 md:p-8 rounded-2xl">
+          <h3 className="text-lg font-bold text-white mb-4 text-center">VERSE Ecosystem</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { name: 'VERSE Token', url: 'https://www.getverse.com/' },
+              { name: 'Security Audits', url: 'https://verse.bitcoin.com/audits/' },
+              { name: 'Bitcoin.com Wallet', url: 'https://wallet.bitcoin.com/' },
+              { name: 'VERSE Wallet', url: 'https://wallet.bitcoin.com/verse/' },
+            ].map((link, i) => (
+              <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors text-center">
+                <span className="text-sm text-gray-300 hover:text-white">{link.name}</span>
+              </a>
+            ))}
+          </div>
         </motion.div>
       </div>
     </section>

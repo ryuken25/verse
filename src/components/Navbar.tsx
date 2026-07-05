@@ -6,13 +6,13 @@ import { Menu, X } from 'lucide-react';
 import ConnectWalletButton from '@/components/wallet/ConnectWalletButton';
 
 const navLinks = [
-  { name: 'Home', href: 'home' },
-  { name: 'Features', href: 'features' },
-  { name: 'Academy', href: 'learn' },
-  { name: 'Events', href: 'events' },
-  { name: 'Market', href: 'market' },
-  { name: 'Docs', href: 'docs-section' },
-  { name: 'Build', href: 'build' },
+  { name: 'Home', href: 'home', type: 'scroll' as const },
+  { name: 'Features', href: 'features', type: 'scroll' as const },
+  { name: 'Academy', href: '/academy', type: 'link' as const },
+  { name: 'Events', href: 'events', type: 'scroll' as const },
+  { name: 'Market', href: 'market', type: 'scroll' as const },
+  { name: 'Build', href: 'build', type: 'scroll' as const },
+  { name: 'Community', href: 'community', type: 'scroll' as const },
 ];
 
 export default function Navbar() {
@@ -24,10 +24,9 @@ export default function Navbar() {
     const onScroll = () => {
       setScrolled(window.scrollY > 50);
       for (const l of [...navLinks].reverse()) {
-        const el = document.getElementById(l.href);
-        if (el && el.getBoundingClientRect().top <= 200) {
-          setActive(l.href);
-          break;
+        if (l.type === 'scroll') {
+          const el = document.getElementById(l.href);
+          if (el && el.getBoundingClientRect().top <= 200) { setActive(l.href); break; }
         }
       }
     };
@@ -35,13 +34,13 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const go = useCallback((id: string) => {
+  const handleClick = useCallback((link: typeof navLinks[0]) => {
     setMobileOpen(false);
-    const el = document.getElementById(id);
-    if (el) {
-      const offset = 80;
-      const top = el.getBoundingClientRect().top + window.scrollY - offset;
-      window.scrollTo({ top, behavior: 'smooth' });
+    if (link.type === 'link') {
+      window.location.href = link.href;
+    } else {
+      const el = document.getElementById(link.href);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, []);
 
@@ -51,74 +50,44 @@ export default function Navbar() {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          {/* Logo */}
-          <button type="button" onClick={() => go('home')} className="flex items-center space-x-2 flex-shrink-0 relative z-10">
+          <button type="button" onClick={() => {
+            if (window.location.pathname !== '/') window.location.href = '/';
+            else document.getElementById('home')?.scrollIntoView({ behavior: 'smooth' });
+          }} className="flex items-center space-x-2 flex-shrink-0 relative z-10">
             <img src="/verse-logo.png" alt="VERSE" className="w-8 h-8 md:w-10 md:h-10" />
             <span className="text-xl md:text-2xl font-bold gradient-text">VERSE</span>
           </button>
 
-          {/* Desktop nav */}
           <div className="hidden lg:flex items-center space-x-1 relative z-10">
             {navLinks.map((l) => (
-              <button
-                key={l.href}
-                type="button"
-                onClick={() => go(l.href)}
+              <button key={l.name} type="button" onClick={() => handleClick(l)}
                 className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                  active === l.href
-                    ? 'text-white bg-white/10'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                {l.name}
-              </button>
+                  active === l.href ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}>{l.name}</button>
             ))}
           </div>
 
-          {/* Wallet + Mobile toggle */}
           <div className="flex items-center space-x-3 relative z-10">
-            <div className="hidden sm:block">
-              <ConnectWalletButton />
-            </div>
-            <button
-              type="button"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className="lg:hidden text-white p-2 -mr-2"
-              aria-label="Toggle menu"
-            >
+            <div className="hidden sm:block"><ConnectWalletButton /></div>
+            <button type="button" onClick={() => setMobileOpen(!mobileOpen)} className="lg:hidden text-white p-2 -mr-2" aria-label="Toggle menu">
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="lg:hidden bg-[#0a0e27]/95 backdrop-blur-xl border-t border-white/5 overflow-hidden"
-          >
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+            className="lg:hidden bg-[#0a0e27]/95 backdrop-blur-xl border-t border-white/5 overflow-hidden">
             <div className="px-4 py-3 space-y-1">
               {navLinks.map((l) => (
-                <button
-                  key={l.href}
-                  type="button"
-                  onClick={() => go(l.href)}
+                <button key={l.name} type="button" onClick={() => handleClick(l)}
                   className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                    active === l.href
-                      ? 'text-white bg-white/10'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {l.name}
-                </button>
+                    active === l.href ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}>{l.name}</button>
               ))}
-              <div className="pt-2">
-                <ConnectWalletButton />
-              </div>
+              <div className="pt-2"><ConnectWalletButton /></div>
             </div>
           </motion.div>
         )}
