@@ -82,7 +82,7 @@ export default function Hero() {
         {intro && <IntroOverlay key="intro" onComplete={() => setIntro(false)} />}
       </AnimatePresence>
 
-      <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 scroll-mt-20">
+      <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 scroll-mt-24">
         {/* Background */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {Array.from({ length: 30 }).map((_, i) => (

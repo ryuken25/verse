@@ -170,7 +170,7 @@ export default function DocsSection() {
   const [active, setActive] = useState('wagmi');
 
   return (
-    <section id="docs-section" className="relative py-20 md:py-32 overflow-hidden scroll-mt-20">
+    <section id="docs-section" className="relative py-20 md:py-32 overflow-hidden scroll-mt-24">
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#0a0e27] via-[#0d1130] to-[#0a0e27]" />
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

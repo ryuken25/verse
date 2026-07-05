@@ -22,7 +22,7 @@ export default function Features() {
   }, []);
 
   return (
-    <section id="features" className="relative py-20 md:py-32 overflow-hidden scroll-mt-20">
+    <section id="features" className="relative py-20 md:py-32 overflow-hidden scroll-mt-24">
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#0a0e27] via-[#0d1130] to-[#0a0e27]" />
       <div className="absolute top-0 left-1/4 w-48 h-48 md:w-96 md:h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
