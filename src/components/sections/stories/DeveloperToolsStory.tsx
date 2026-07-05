@@ -1,7 +1,7 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import SaturnOrbitVisual from './SaturnOrbitVisual';
+import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
 import { Code, Layers, Wifi, Hexagon, FileCode, ExternalLink } from 'lucide-react';
 
 const steps = [
@@ -12,12 +12,12 @@ const steps = [
   { id: 'tokens', kicker: 'Token List', title: 'Use a verified VERSE token list', body: 'Token lists reduce mistakes in dApp interfaces. Use verified token metadata from a trusted source.', bullets: ['Verified symbols', 'logos and decimals', 'safer frontend metadata'] },
 ];
 
-const badges = [
-  { id: 'wagmi', label: 'wagmi', icon: <Code className="w-5 h-5 text-purple-300" />, ring: 0, angle: 0, duration: 22 },
-  { id: 'viem', label: 'viem', icon: <Layers className="w-5 h-5 text-blue-300" />, ring: 0, angle: 120, duration: 24 },
-  { id: 'reown', label: 'Reown', icon: <Wifi className="w-5 h-5 text-green-300" />, ring: 0, angle: 240, duration: 20 },
-  { id: 'polygon', label: 'Polygon', icon: <Hexagon className="w-5 h-5 text-violet-300" />, ring: 1, angle: 60, duration: 28 },
-  { id: 'tokens', label: 'Tokens', icon: <FileCode className="w-5 h-5 text-cyan-300" />, ring: 1, angle: 180, duration: 26 },
+const nodes = [
+  { id: 'wagmi', title: 'wagmi', subtitle: 'React wallet hooks', icon: <Code className="w-4 h-4 text-purple-300" />, ring: 'inner' as const, angle: 20, speed: 0.14, radius: 92, calloutSide: 'bottom-left' as const },
+  { id: 'viem', title: 'viem', subtitle: 'TypeScript Ethereum client', icon: <Layers className="w-4 h-4 text-blue-300" />, ring: 'outer' as const, angle: 90, speed: 0.10, radius: 148, calloutSide: 'left' as const },
+  { id: 'reown', title: 'Reown AppKit', subtitle: 'WalletConnect UI / modal', icon: <Wifi className="w-4 h-4 text-green-300" />, ring: 'inner' as const, angle: 160, speed: 0.16, radius: 92, calloutSide: 'top-left' as const },
+  { id: 'polygon', title: 'Polygon Docs', subtitle: 'Chain setup & deployment', icon: <Hexagon className="w-4 h-4 text-violet-300" />, ring: 'outer' as const, angle: 240, speed: 0.09, radius: 148, calloutSide: 'right' as const },
+  { id: 'tokens', title: 'Token List', subtitle: 'Token metadata / references', icon: <FileCode className="w-4 h-4 text-cyan-300" />, ring: 'inner' as const, angle: 310, speed: 0.12, radius: 92, calloutSide: 'bottom-right' as const },
 ];
 
 export default function DeveloperToolsStory() {
@@ -29,17 +29,19 @@ export default function DeveloperToolsStory() {
       description="Build dApps on Polygon using standard EVM tools. No proprietary SDK required."
       steps={steps}
       minHeightClass="min-h-[340vh] lg:min-h-[390vh]"
-      visual={({ activeStep }) => (
-        <SaturnOrbitVisual
-          center={
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-red-500/30 to-pink-500/30 border border-red-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(239,68,68,0.3)]">
-              <Code className="w-10 h-10 text-red-300" />
-            </div>
-          }
-          badges={badges}
-          activeIndex={activeStep}
-        />
-      )}
+      visual={({ activeStep }) => {
+        const stepToNode: Record<number, string> = { 0: 'wagmi', 1: 'wagmi', 2: 'reown', 3: 'polygon', 4: 'tokens' };
+        return (
+          <AnnotatedOrbitVisual
+            centerIcon={<Code className="w-8 h-8 text-red-300" />}
+            centerTitle="Build on EVM"
+            centerSubtitle="Standard tools, Polygon-ready"
+            nodes={nodes}
+            activeNodeId={stepToNode[activeStep]}
+            theme="devtools"
+          />
+        );
+      }}
       ctas={
         <div className="flex flex-wrap gap-3">
           <a href="https://wagmi.sh/" target="_blank" rel="noopener noreferrer" className="px-5 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl text-white text-sm font-medium hover:shadow-lg transition-all flex items-center space-x-1">

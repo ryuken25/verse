@@ -1,22 +1,22 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import SaturnOrbitVisual from './SaturnOrbitVisual';
+import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
 import { Users, MessageCircle, Linkedin, Hammer, ExternalLink } from 'lucide-react';
 
 const steps = [
-  { id: 'join', kicker: 'Network', title: 'Start with the community layer', body: 'Web3 is easier when you are not learning alone. Community channels help users discover updates and find builders.', bullets: ['Learn with others', 'Find builders', 'Follow ecosystem updates'] },
-  { id: 'chat', kicker: 'Chat', title: 'Telegram and Discord keep builders connected', body: 'Telegram is useful for quick updates, while Discord is useful for structured channels, events, and developer discussions.', bullets: ['Telegram for quick updates', 'Discord for channels', 'Events and support'] },
-  { id: 'social', kicker: 'Social', title: 'X and LinkedIn extend the network', body: 'Public social channels help projects share announcements, educational threads, partnership news, and developer opportunities.', bullets: ['X for announcements', 'LinkedIn for professional updates', 'Public reputation'] },
+  { id: 'join', kicker: 'Network', title: 'Start with the community layer', body: 'Community channels help users discover updates and find builders working on similar problems.', bullets: ['Learn with others', 'Find builders', 'Follow ecosystem updates'] },
+  { id: 'chat', kicker: 'Chat', title: 'Telegram and Discord keep builders connected', body: 'Telegram for quick updates, Discord for structured channels, events, and developer discussions.', bullets: ['Telegram for quick updates', 'Discord for channels', 'Events and support'] },
+  { id: 'social', kicker: 'Social', title: 'X and LinkedIn extend the network', body: 'Public social channels help projects share announcements, educational threads, and partnership news.', bullets: ['X for announcements', 'LinkedIn for professional updates', 'Public reputation'] },
   { id: 'build', kicker: 'Build', title: 'Community turns users into builders', body: 'A strong ecosystem grows when people learn, build, review, ship, and help each other improve.', bullets: ['Ship projects', 'Review dApps', 'Share feedback'] },
 ];
 
-const badges = [
-  { id: 'tg', label: 'Telegram', icon: <MessageCircle className="w-5 h-5 text-blue-300" />, ring: 0, angle: 0, duration: 22 },
-  { id: 'dc', label: 'Discord', icon: <Users className="w-5 h-5 text-indigo-300" />, ring: 0, angle: 120, duration: 24 },
-  { id: 'x', label: 'X', icon: <ExternalLink className="w-5 h-5 text-gray-300" />, ring: 1, angle: 60, duration: 26 },
-  { id: 'li', label: 'LinkedIn', icon: <Linkedin className="w-5 h-5 text-blue-300" />, ring: 1, angle: 180, duration: 28 },
-  { id: 'build', label: 'Builder', icon: <Hammer className="w-5 h-5 text-orange-300" />, ring: 1, angle: 300, duration: 30 },
+const nodes = [
+  { id: 'telegram', title: 'Telegram', subtitle: 'Quick updates / chat', icon: <MessageCircle className="w-4 h-4 text-blue-300" />, ring: 'inner' as const, angle: 30, speed: 0.14, radius: 92, calloutSide: 'bottom-left' as const },
+  { id: 'discord', title: 'Discord', subtitle: 'Developer discussions', icon: <Users className="w-4 h-4 text-indigo-300" />, ring: 'outer' as const, angle: 100, speed: 0.10, radius: 148, calloutSide: 'left' as const },
+  { id: 'twitter', title: 'X (Twitter)', subtitle: 'Announcements', icon: <ExternalLink className="w-4 h-4 text-gray-300" />, ring: 'inner' as const, angle: 200, speed: 0.16, radius: 92, calloutSide: 'top-right' as const },
+  { id: 'linkedin', title: 'LinkedIn', subtitle: 'Professional presence', icon: <Linkedin className="w-4 h-4 text-blue-300" />, ring: 'outer' as const, angle: 280, speed: 0.09, radius: 148, calloutSide: 'right' as const },
+  { id: 'events', title: 'Events', subtitle: 'Live participation', icon: <Hammer className="w-4 h-4 text-orange-300" />, ring: 'inner' as const, angle: 320, speed: 0.12, radius: 92, calloutSide: 'bottom-right' as const },
 ];
 
 export default function CommunityHubStory() {
@@ -28,17 +28,19 @@ export default function CommunityHubStory() {
       description="Join the Bitcoin.com and VERSE community. Connect with developers, traders, learners, and builders worldwide."
       steps={steps}
       minHeightClass="min-h-[300vh] lg:min-h-[340vh]"
-      visual={({ activeStep }) => (
-        <SaturnOrbitVisual
-          center={
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-teal-500/30 to-cyan-500/30 border border-teal-500/40 flex items-center justify-center shadow-[0_0_40px_rgba(20,184,166,0.3)]">
-              <Users className="w-10 h-10 text-teal-300" />
-            </div>
-          }
-          badges={badges}
-          activeIndex={activeStep}
-        />
-      )}
+      visual={({ activeStep }) => {
+        const stepToNode: Record<number, string> = { 0: 'telegram', 1: 'telegram', 2: 'twitter', 3: 'events' };
+        return (
+          <AnnotatedOrbitVisual
+            centerIcon={<Users className="w-8 h-8 text-teal-300" />}
+            centerTitle="VERSE Community"
+            centerSubtitle="Builders, traders, and users"
+            nodes={nodes}
+            activeNodeId={stepToNode[activeStep]}
+            theme="community"
+          />
+        );
+      }}
       ctas={
         <div className="flex flex-wrap gap-3">
           <a href="https://t.me/GetVerse/1/" target="_blank" rel="noopener noreferrer"
