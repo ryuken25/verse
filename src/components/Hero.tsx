@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDown, Sparkles, Zap, Globe, ChevronRight } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useReducedMotion } from '@/hooks/useReducedMotionSafe';
+import MagneticButton from '@/components/ui/MagneticButton';
+
+const HeroScene3D = dynamic(() => import('@/components/three/HeroScene3D'), {
+  ssr: false,
+  loading: () => <div className="absolute inset-0" />,
+});
 
 function IntroOverlay({ onComplete }: { onComplete: () => void }) {
   useEffect(() => {
@@ -66,6 +74,7 @@ function IntroOverlay({ onComplete }: { onComplete: () => void }) {
 export default function Hero() {
   const [intro, setIntro] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -79,26 +88,17 @@ export default function Hero() {
   return (
     <>
       <AnimatePresence>
-        {intro && <IntroOverlay key="intro" onComplete={() => setIntro(false)} />}
+        {intro && !reducedMotion && <IntroOverlay key="intro" onComplete={() => setIntro(false)} />}
       </AnimatePresence>
 
       <section id="home" className="relative min-h-screen flex items-center justify-center overflow-hidden px-4 pt-24 scroll-mt-24">
-        {/* Background */}
+        {/* 3D Scene */}
+        {!reducedMotion && <HeroScene3D />}
+
+        {/* Background fallback */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          {Array.from({ length: 30 }).map((_, i) => (
-            <motion.div key={i} className="absolute rounded-full"
-              style={{ width: Math.random() * 3 + 1, height: Math.random() * 3 + 1, left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`, background: ['#7c3aed', '#3b82f6', '#06b6d4'][i % 3] }}
-              animate={{ y: [0, -30, 0], opacity: [0.1, 0.5, 0.1] }}
-              transition={{ duration: 4 + Math.random() * 4, repeat: Infinity, delay: Math.random() * 3 }} />
-          ))}
-          <motion.div className="absolute top-1/4 left-1/4 w-64 h-64 md:w-[500px] md:h-[500px]"
-            animate={{ rotate: 360 }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-600/10 to-blue-600/10 blur-3xl" />
-          </motion.div>
-          <motion.div className="absolute bottom-1/4 right-1/4 w-48 h-48 md:w-[400px] md:h-[400px]"
-            animate={{ rotate: -360 }} transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-600/10 to-purple-600/10 blur-3xl" />
-          </motion.div>
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 md:w-[500px] md:h-[500px] bg-purple-600/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 w-48 h-48 md:w-[400px] md:h-[400px] bg-blue-600/10 rounded-full blur-3xl" />
         </div>
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0a0e27]/50 to-[#0a0e27] pointer-events-none z-10" />
 
@@ -128,14 +128,14 @@ export default function Hero() {
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: intro ? 4.8 : 1 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4">
-              <button type="button" onClick={() => go('learn')}
-                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm md:text-base hover:shadow-lg hover:shadow-purple-500/30 transition-all flex items-center justify-center space-x-2 active:scale-95 relative z-10">
+              <MagneticButton onClick={() => go('learn')}
+                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl text-white font-semibold text-sm md:text-base shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-shadow flex items-center justify-center space-x-2 relative z-10">
                 <Zap className="w-4 h-4 md:w-5 md:h-5" /><span>Start Learning</span><ChevronRight className="w-4 h-4" />
-              </button>
-              <button type="button" onClick={() => go('features')}
-                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 glass rounded-xl text-white font-semibold text-sm md:text-base hover:bg-white/10 transition-all flex items-center justify-center space-x-2 active:scale-95 relative z-10">
+              </MagneticButton>
+              <MagneticButton onClick={() => go('features')}
+                className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 glass rounded-xl text-white font-semibold text-sm md:text-base hover:bg-white/10 transition-all flex items-center justify-center space-x-2 relative z-10">
                 <Globe className="w-4 h-4 md:w-5 md:h-5" /><span>Explore Ecosystem</span>
-              </button>
+              </MagneticButton>
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: intro ? 5.2 : 1.4 }}
@@ -146,11 +146,11 @@ export default function Hero() {
                 { value: '100+', label: 'Projects Built', id: 'build' },
                 { value: '$10M+', label: 'TVL Locked', id: 'market' },
               ].map((s, i) => (
-                <button type="button" key={i} onClick={() => go(s.id)}
-                  className="glass p-4 md:p-6 rounded-xl md:rounded-2xl hover:bg-white/5 hover:border-purple-500/30 transition-all active:scale-95 cursor-pointer relative z-10">
+                <motion.button type="button" key={i} onClick={() => go(s.id)} whileHover={{ y: -4, scale: 1.02 }}
+                  className="glass p-4 md:p-6 rounded-xl md:rounded-2xl hover:bg-white/5 hover:border-purple-500/30 transition-all cursor-pointer relative z-10">
                   <div className="text-2xl md:text-3xl font-bold gradient-text mb-1">{s.value}</div>
                   <div className="text-gray-400 text-xs md:text-sm">{s.label}</div>
-                </button>
+                </motion.button>
               ))}
             </motion.div>
           </motion.div>
@@ -159,7 +159,7 @@ export default function Hero() {
             transition={{ delay: intro ? 6 : 2, duration: 2, repeat: Infinity }}
             className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 cursor-pointer z-10"
             onClick={() => go('features')}>
-            <ArrowDown className="w-5 h-5 md:w-6 h-6 text-gray-400" />
+            <ArrowDown className="w-5 h-5 md:w-6 md:h-6 text-gray-400" />
           </motion.div>
         </div>
       </section>

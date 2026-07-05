@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { motion } from 'framer-motion';
+
 import { GraduationCap, Wallet, CalendarDays, BarChart3, Layers, TrendingUp, Users, Lock, Cpu, ArrowRight, Shield, ExternalLink } from 'lucide-react';
 
 const features = [
