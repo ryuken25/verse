@@ -11,16 +11,14 @@ export type StoryOrbitNode = {
   angle: number;
   radius?: number;
   ring?: 'inner' | 'outer';
-  speed?: number;
-  calloutSide:
-    | 'top'
-    | 'right'
-    | 'bottom'
-    | 'left'
+  labelSlot:
     | 'top-left'
     | 'top-right'
+    | 'middle-left'
+    | 'middle-right'
     | 'bottom-left'
     | 'bottom-right';
+  orbitDrift?: number;
 };
 
 type Theme = 'wallet' | 'fair' | 'community' | 'devtools';
@@ -71,23 +69,33 @@ const THEME = {
   },
 };
 
-function clamp(n: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, n));
-}
+function getLabelSlotPosition(
+  slot: StoryOrbitNode['labelSlot'],
+  width: number,
+  height: number,
+  compact = false,
+) {
+  const labelW = compact ? 102 : 150;
+  const labelH = compact ? 42 : 56;
+  const padX = compact ? 12 : 22;
+  const padY = compact ? 14 : 24;
+  const top = padY;
+  const middle = height / 2 - labelH / 2;
+  const bottom = height - labelH - padY;
 
-function labelOffset(side: StoryOrbitNode['calloutSide'], compact = false) {
-  const d = compact ? 42 : 66;
-  const long = compact ? 96 : 154;
-
-  switch (side) {
-    case 'top': return { x: -52, y: -d };
-    case 'right': return { x: d, y: -22 };
-    case 'bottom': return { x: -52, y: d - 8 };
-    case 'left': return { x: -long, y: -22 };
-    case 'top-left': return { x: -long, y: -d };
-    case 'top-right': return { x: d, y: -d };
-    case 'bottom-left': return { x: -long, y: d - 5 };
-    case 'bottom-right': return { x: d, y: d - 5 };
+  switch (slot) {
+    case 'top-left':
+      return { x: padX, y: top, w: labelW, h: labelH };
+    case 'top-right':
+      return { x: width - labelW - padX, y: top, w: labelW, h: labelH };
+    case 'middle-left':
+      return { x: padX, y: middle, w: labelW, h: labelH };
+    case 'middle-right':
+      return { x: width - labelW - padX, y: middle, w: labelW, h: labelH };
+    case 'bottom-left':
+      return { x: padX, y: bottom, w: labelW, h: labelH };
+    case 'bottom-right':
+      return { x: width - labelW - padX, y: bottom, w: labelW, h: labelH };
   }
 }
 
@@ -112,19 +120,16 @@ export default function StoryGlobeOrbitVisual({
 
   const innerRadius = compact ? 82 : 122;
   const outerRadius = compact ? 122 : 188;
-  const ellipseY = compact ? 0.48 : 0.50;
+  const ellipseY = compact ? 0.48 : 0.5;
 
   useEffect(() => {
     if (paused || reduceMotion) return;
-
     let raf = 0;
     const start = performance.now();
-
     const loop = (now: number) => {
       setTick((now - start) / 1000);
       raf = requestAnimationFrame(loop);
     };
-
     raf = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf);
   }, [paused, reduceMotion]);
@@ -132,33 +137,22 @@ export default function StoryGlobeOrbitVisual({
   const positioned = useMemo(() => {
     return nodes.map((node) => {
       const radius = node.radius ?? (node.ring === 'outer' ? outerRadius : innerRadius);
-      const animatedAngle =
-        node.angle + (paused || reduceMotion ? 0 : tick * (node.speed ?? 2.4));
-
+      const drift = Math.min(4, Math.max(0, node.orbitDrift ?? 0));
+      const animatedAngle = node.angle + (paused || reduceMotion ? 0 : Math.sin(tick * 0.55) * drift);
       const angle = (animatedAngle * Math.PI) / 180;
       const x = cx + Math.cos(angle) * radius;
       const y = cy + Math.sin(angle) * radius * ellipseY;
-
-      const labelW = compact ? 100 : 148;
-      const labelH = compact ? 42 : 56;
-      const offset = labelOffset(node.calloutSide, compact);
-
-      const labelX = clamp(x + offset.x, 14, width - labelW - 14);
-      const labelY = clamp(y + offset.y, 14, height - labelH - 14);
-      const targetX = labelX + labelW / 2;
-      const targetY = labelY + labelH / 2;
-
+      const label = getLabelSlotPosition(node.labelSlot, width, height, compact);
+      const targetX = label.x + label.w / 2;
+      const targetY = label.y + label.h / 2;
       const elbowX = x + (targetX - x) * 0.58;
-      const elbowY = y + (targetY - y) * 0.24;
+      const elbowY = y + (targetY - y) * 0.18;
 
       return {
         ...node,
         x,
         y,
-        labelX,
-        labelY,
-        labelW,
-        labelH,
+        label,
         targetX,
         targetY,
         elbowX,
@@ -178,21 +172,11 @@ export default function StoryGlobeOrbitVisual({
         paused ? 'animation-paused' : '',
       ].join(' ')}
     >
-      <div
-        className="pointer-events-none absolute left-1/2 top-[22%] h-44 w-44 -translate-x-1/2 rounded-full blur-3xl md:h-60 md:w-60"
-        style={{ backgroundColor: t.glowA }}
-      />
-      <div
-        className="pointer-events-none absolute left-[58%] top-[54%] h-40 w-40 -translate-x-1/2 rounded-full blur-3xl md:h-56 md:w-56"
-        style={{ backgroundColor: t.glowB }}
-      />
+      <div className="pointer-events-none absolute left-1/2 top-[22%] h-44 w-44 -translate-x-1/2 rounded-full blur-3xl md:h-60 md:w-60" style={{ backgroundColor: t.glowA }} />
+      <div className="pointer-events-none absolute left-[58%] top-[54%] h-40 w-40 -translate-x-1/2 rounded-full blur-3xl md:h-56 md:w-56" style={{ backgroundColor: t.glowB }} />
 
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="pointer-events-none absolute inset-0 h-full w-full"
-        aria-hidden="true"
-      >
-        <ellipse
+      <svg viewBox={`0 0 ${width} ${height}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+        <motion.ellipse
           cx={cx}
           cy={cy}
           rx={outerRadius}
@@ -201,16 +185,10 @@ export default function StoryGlobeOrbitVisual({
           stroke={t.ringA}
           strokeWidth="1.4"
           strokeDasharray="6 8"
+          animate={paused || reduceMotion ? {} : { strokeDashoffset: [0, -28] }}
+          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
         />
-        <ellipse
-          cx={cx}
-          cy={cy}
-          rx={innerRadius}
-          ry={innerRadius * ellipseY}
-          fill="none"
-          stroke={t.ringB}
-          strokeWidth="1"
-        />
+        <ellipse cx={cx} cy={cy} rx={innerRadius} ry={innerRadius * ellipseY} fill="none" stroke={t.ringB} strokeWidth="1" />
 
         {positioned.map((node) => (
           <g key={`line-${node.id}`}>
@@ -221,23 +199,14 @@ export default function StoryGlobeOrbitVisual({
               strokeWidth={node.active ? 1.8 : 1}
               strokeLinecap="round"
             />
-            <circle
-              cx={node.x}
-              cy={node.y}
-              r={node.active ? 4 : 2.4}
-              fill={node.active ? t.active : 'rgba(255,255,255,0.38)'}
-            />
+            <circle cx={node.x} cy={node.y} r={node.active ? 4 : 2.4} fill={node.active ? t.active : 'rgba(255,255,255,0.38)'} />
           </g>
         ))}
       </svg>
 
       <motion.div
         data-testid={`story-core-${theme}`}
-        animate={
-          paused || reduceMotion
-            ? {}
-            : { rotate: [0, 1.2, -1.2, 0], scale: [1, 1.018, 1] }
-        }
+        animate={paused || reduceMotion ? {} : { rotate: [0, 1.2, -1.2, 0], scale: [1, 1.018, 1] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         className={[
           'absolute z-20 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center rounded-full border border-white/15 text-center backdrop-blur-md',
@@ -250,11 +219,7 @@ export default function StoryGlobeOrbitVisual({
       >
         <div className="mb-2 text-white">{centerIcon}</div>
         <div className="text-sm font-semibold text-white">{centerTitle}</div>
-        {centerSubtitle && !compact && (
-          <div className="mt-1 max-w-[110px] text-[10px] leading-4 text-gray-300">
-            {centerSubtitle}
-          </div>
-        )}
+        {centerSubtitle && !compact && <div className="mt-1 max-w-[110px] text-[10px] leading-4 text-gray-300">{centerSubtitle}</div>}
       </motion.div>
 
       {positioned.map((node) => (
@@ -266,9 +231,7 @@ export default function StoryGlobeOrbitVisual({
             className={[
               'absolute z-30 flex -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border backdrop-blur-md',
               compact ? 'h-9 w-9' : 'h-12 w-12',
-              node.active
-                ? 'border-cyan-300/80 bg-cyan-300/15 shadow-[0_0_28px_rgba(34,211,238,0.26)]'
-                : 'border-white/15 bg-white/10 shadow-[0_0_18px_rgba(124,58,237,0.12)]',
+              node.active ? 'border-cyan-300/80 bg-cyan-300/15 shadow-[0_0_28px_rgba(34,211,238,0.26)]' : 'border-white/15 bg-white/10 shadow-[0_0_18px_rgba(124,58,237,0.12)]',
             ].join(' ')}
             style={{ left: node.x, top: node.y }}
           >
@@ -277,22 +240,16 @@ export default function StoryGlobeOrbitVisual({
 
           <motion.div
             data-testid={`story-orbit-label-${node.id}`}
-            animate={{ opacity: node.active ? 1 : 0.76, scale: node.active ? 1.02 : 1 }}
+            animate={{ opacity: node.active ? 1 : 0.72, scale: node.active ? 1.02 : 1 }}
             transition={{ duration: 0.2 }}
             className={[
               'absolute z-20 rounded-xl border px-3 py-2 backdrop-blur-md',
-              node.active
-                ? 'border-cyan-300/50 bg-cyan-300/[0.10]'
-                : 'border-white/10 bg-[#0c1028]/78',
+              node.active ? 'border-cyan-300/50 bg-cyan-300/[0.10]' : 'border-white/10 bg-[#0c1028]/78',
             ].join(' ')}
-            style={{ left: node.labelX, top: node.labelY, width: node.labelW, minHeight: node.labelH }}
+            style={{ left: node.label.x, top: node.label.y, width: node.label.w, minHeight: node.label.h }}
           >
             <div className="truncate text-[11px] font-semibold text-white">{node.title}</div>
-            {node.subtitle && !compact && (
-              <div className="mt-0.5 line-clamp-2 text-[10px] leading-3 text-gray-400">
-                {node.subtitle}
-              </div>
-            )}
+            {node.subtitle && !compact && <div className="mt-0.5 line-clamp-2 text-[10px] leading-3 text-gray-400">{node.subtitle}</div>}
           </motion.div>
         </div>
       ))}
