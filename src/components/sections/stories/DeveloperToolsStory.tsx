@@ -1,8 +1,8 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
-import { developerNodes } from './orbitStoryConfigs';
+import StoryGlobeOrbitVisual from './StoryGlobeOrbitVisual';
+import { developerNodes } from './storyOrbitConfigs';
 import { Code, ExternalLink } from 'lucide-react';
 
 const steps = [
@@ -23,7 +23,7 @@ export default function DeveloperToolsStory() {
       steps={steps}
       minHeightClass="min-h-[340vh] lg:min-h-[390vh]"
       visual={({ activeStep, paused, compact }) => (
-        <AnnotatedOrbitVisual
+        <StoryGlobeOrbitVisual
           theme="devtools"
           centerIcon={<Code className="h-8 w-8 text-blue-300" />}
           centerTitle="Build on EVM"

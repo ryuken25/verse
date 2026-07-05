@@ -1,8 +1,8 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
-import { provablyFairNodes } from './orbitStoryConfigs';
+import StoryGlobeOrbitVisual from './StoryGlobeOrbitVisual';
+import { provablyFairNodes } from './storyOrbitConfigs';
 import { Dice5, ExternalLink } from 'lucide-react';
 
 const steps = [
@@ -22,7 +22,7 @@ export default function ProvablyFairStory() {
       steps={steps}
       minHeightClass="min-h-[300vh] lg:min-h-[340vh]"
       visual={({ activeStep, paused, compact }) => (
-        <AnnotatedOrbitVisual
+        <StoryGlobeOrbitVisual
           theme="fair"
           centerIcon={<Dice5 className="h-8 w-8 text-purple-300" />}
           centerTitle="Provable Outcome"

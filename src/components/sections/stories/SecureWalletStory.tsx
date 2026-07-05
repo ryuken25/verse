@@ -1,8 +1,8 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
-import { secureWalletNodes } from './orbitStoryConfigs';
+import StoryGlobeOrbitVisual from './StoryGlobeOrbitVisual';
+import { secureWalletNodes } from './storyOrbitConfigs';
 import { Shield, ExternalLink } from 'lucide-react';
 
 const steps = [
@@ -24,7 +24,7 @@ export default function SecureWalletStory() {
       steps={steps}
       minHeightClass="min-h-[380vh] lg:min-h-[430vh]"
       visual={({ activeStep, paused, compact }) => (
-        <AnnotatedOrbitVisual
+        <StoryGlobeOrbitVisual
           theme="wallet"
           centerIcon={<Shield className="h-8 w-8 text-cyan-300" />}
           centerTitle="Wallet Safety"

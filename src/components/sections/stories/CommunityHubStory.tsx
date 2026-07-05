@@ -1,8 +1,8 @@
 'use client';
 
 import StoryShell from './StoryShell';
-import AnnotatedOrbitVisual from './AnnotatedOrbitVisual';
-import { communityNodes } from './orbitStoryConfigs';
+import StoryGlobeOrbitVisual from './StoryGlobeOrbitVisual';
+import { communityNodes } from './storyOrbitConfigs';
 import { Users, ExternalLink } from 'lucide-react';
 
 const steps = [
@@ -22,7 +22,7 @@ export default function CommunityHubStory() {
       steps={steps}
       minHeightClass="min-h-[300vh] lg:min-h-[340vh]"
       visual={({ activeStep, paused, compact }) => (
-        <AnnotatedOrbitVisual
+        <StoryGlobeOrbitVisual
           theme="community"
           centerIcon={<Users className="h-8 w-8 text-teal-300" />}
           centerTitle="VERSE Community"
