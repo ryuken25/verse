@@ -75,10 +75,10 @@ function getLabelSlotPosition(
   height: number,
   compact = false,
 ) {
-  const labelW = compact ? 102 : 150;
-  const labelH = compact ? 42 : 56;
-  const padX = compact ? 12 : 22;
-  const padY = compact ? 14 : 24;
+  const labelW = compact ? 88 : 150;
+  const labelH = compact ? 34 : 56;
+  const padX = compact ? 10 : 22;
+  const padY = compact ? 12 : 24;
   const top = padY;
   const middle = height / 2 - labelH / 2;
   const bottom = height - labelH - padY;
@@ -113,13 +113,13 @@ export default function StoryGlobeOrbitVisual({
   const [tick, setTick] = useState(0);
   const t = THEME[theme];
 
-  const width = compact ? 340 : 560;
-  const height = compact ? 340 : 560;
+  const width = compact ? 300 : 560;
+  const height = compact ? 300 : 560;
   const cx = width / 2;
   const cy = height / 2;
 
-  const innerRadius = compact ? 82 : 122;
-  const outerRadius = compact ? 122 : 188;
+  const innerRadius = compact ? 68 : 122;
+  const outerRadius = compact ? 104 : 188;
   const ellipseY = compact ? 0.48 : 0.5;
 
   useEffect(() => {
@@ -137,8 +137,8 @@ export default function StoryGlobeOrbitVisual({
   const positioned = useMemo(() => {
     return nodes.map((node) => {
       const radius = node.radius ?? (node.ring === 'outer' ? outerRadius : innerRadius);
-      const drift = Math.min(4, Math.max(0, node.orbitDrift ?? 0));
-      const animatedAngle = node.angle + (paused || reduceMotion ? 0 : Math.sin(tick * 0.55) * drift);
+      const drift = compact ? 0 : Math.min(4, Math.max(0, node.orbitDrift ?? 0));
+      const animatedAngle = node.angle + (paused || reduceMotion ? 0 : Math.sin(tick*0.45) * drift);
       const angle = (animatedAngle * Math.PI) / 180;
       const x = cx + Math.cos(angle) * radius;
       const y = cy + Math.sin(angle) * radius * ellipseY;
@@ -168,15 +168,15 @@ export default function StoryGlobeOrbitVisual({
       className={[
         'relative mx-auto overflow-hidden rounded-[2rem] border border-white/10 bg-[#070b1f]/70',
         'shadow-[0_24px_80px_rgba(0,0,0,0.22)]',
-        compact ? 'h-[340px] w-full max-w-[340px]' : 'h-[560px] w-full max-w-[560px]',
+        compact ? 'h-[300px] w-full max-w-[300px]' : 'h-[560px] w-full max-w-[560px]',
         paused ? 'animation-paused' : '',
       ].join(' ')}
     >
-      <div className="pointer-events-none absolute left-1/2 top-[22%] h-44 w-44 -translate-x-1/2 rounded-full blur-3xl md:h-60 md:w-60" style={{ backgroundColor: t.glowA }} />
-      <div className="pointer-events-none absolute left-[58%] top-[54%] h-40 w-40 -translate-x-1/2 rounded-full blur-3xl md:h-56 md:w-56" style={{ backgroundColor: t.glowB }} />
+      <div className="pointer-events-none absolute left-1/2 top-[22%] h-32 w-32 -translate-x-1/2 rounded-full blur-2xl md:h-60 md:w-60 md:blur-3xl" style={{ backgroundColor: t.glowA }} />
+      <div className="pointer-events-none absolute left-[58%] top-[54%] hidden h-56 w-56 -translate-x-1/2 rounded-full blur-3xl md:block" style={{ backgroundColor: t.glowB }} />
 
       <svg viewBox={`0 0 ${width} ${height}`} className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-        <motion.ellipse
+        <ellipse
           cx={cx}
           cy={cy}
           rx={outerRadius}
@@ -185,8 +185,7 @@ export default function StoryGlobeOrbitVisual({
           stroke={t.ringA}
           strokeWidth="1.4"
           strokeDasharray="6 8"
-          animate={paused || reduceMotion ? {} : { strokeDashoffset: [0, -28] }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'linear' }}
+          className={!compact && !paused ? 'story-orbit-dash' : ''}
         />
         <ellipse cx={cx} cy={cy} rx={innerRadius} ry={innerRadius * ellipseY} fill="none" stroke={t.ringB} strokeWidth="1" />
 
@@ -243,7 +242,7 @@ export default function StoryGlobeOrbitVisual({
             animate={{ opacity: node.active ? 1 : 0.72, scale: node.active ? 1.02 : 1 }}
             transition={{ duration: 0.2 }}
             className={[
-              'absolute z-20 rounded-xl border px-3 py-2 backdrop-blur-md',
+              'absolute z-20 rounded-xl border px-2 py-1.5 backdrop-blur-sm md:px-3 md:py-2 md:backdrop-blur-md',
               node.active ? 'border-cyan-300/50 bg-cyan-300/[0.10]' : 'border-white/10 bg-[#0c1028]/78',
             ].join(' ')}
             style={{ left: node.label.x, top: node.label.y, width: node.label.w, minHeight: node.label.h }}

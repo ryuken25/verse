@@ -44,12 +44,15 @@ export default function StoryStepCard({
         initial={{ opacity: 0, y: 28, filter: 'blur(8px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         exit={{ opacity: 0, y: -24, filter: 'blur(8px)' }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="rounded-3xl border border-cyan-300/25 bg-white/[0.055] p-6 shadow-[0_0_40px_rgba(34,211,238,0.10)]"
+        transition={{ duration: 0.32, ease: 'easeOut' }}
+        className={[
+          'rounded-3xl border border-cyan-300/25 bg-white/[0.055] shadow-[0_0_32px_rgba(34,211,238,0.10)]',
+          compact ? 'p-4' : 'p-6',
+        ].join(' ')}
       >
         <div className="text-xs font-semibold uppercase tracking-[0.22em] text-cyan-200/80">{step.kicker}</div>
-        <h3 className="mt-3 text-2xl font-bold text-white">{step.title}</h3>
-        <p className="mt-4 text-base leading-8 text-gray-300">{step.body}</p>
+        <h3 className={compact ? 'mt-3 text-lg font-bold text-white' : 'mt-3 text-2xl font-bold text-white'}>{step.title}</h3>
+        <p className={compact ? 'mt-3 text-sm leading-7 text-gray-300' : 'mt-4 text-base leading-8 text-gray-300'}>{step.body}</p>
         {step.bullets?.length ? (
           <ul className="mt-4 space-y-2">
             {step.bullets.map((item) => (

@@ -39,7 +39,7 @@ test.describe('VERSE story globe orbit audit', () => {
     }
   });
 
-  test('orbit labels stay fixed while pointer lines exist', async ({ page }) => {
+  test('desktop orbit labels stay fixed while pointer lines exist', async ({ page }) => {
     await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto('/#features', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('[data-testid="story-globe-wallet"]', { timeout: 30_000 });
@@ -88,19 +88,54 @@ test.describe('VERSE story globe orbit audit', () => {
     expect(visibleCards).toBeLessThanOrEqual(2);
   });
 
+  test('mobile renders only mobile story layout and no desktop duplicate', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#features', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-testid="story-visual-mobile-feature-secure-wallet"]', { timeout: 30_000 });
+    await page.locator('#feature-secure-wallet').scrollIntoViewIfNeeded();
+
+    await expect(page.locator('[data-testid="story-visual-mobile-feature-secure-wallet"]')).toHaveCount(1);
+    await expect(page.locator('[data-testid="story-visual-feature-secure-wallet"]')).toHaveCount(0);
+  });
+
   test('mobile story globe is compact and no horizontal overflow', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/#features', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('[data-testid="story-visual-mobile-feature-secure-wallet"]', { timeout: 30_000 });
-
-    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
-    expect(overflow).toBe(false);
 
     const visual = page.locator('[data-testid="story-visual-mobile-feature-secure-wallet"]').first();
     await expect(visual).toBeVisible();
 
     const box = await visual.boundingBox();
     expect(box).not.toBeNull();
-    expect(box!.height).toBeLessThanOrEqual(390);
+    expect(box!.height).toBeLessThanOrEqual(330);
+
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2);
+    expect(overflow).toBe(false);
+  });
+
+  test('mobile labels stay fixed during story scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/#features', { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-testid="story-visual-mobile-feature-secure-wallet"]', { timeout: 30_000 });
+
+    await page.locator('#feature-secure-wallet').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(300);
+
+    const before = await page.evaluate(() => {
+      const globe = document.querySelector('[data-testid="story-visual-mobile-feature-secure-wallet"] [data-testid="story-globe-wallet"]')!.getBoundingClientRect();
+      const label = document.querySelector('[data-testid="story-visual-mobile-feature-secure-wallet"] [data-testid="story-orbit-label-keys"]')!.getBoundingClientRect();
+      return { x: label.x - globe.x, y: label.y - globe.y };
+    });
+    await page.mouse.wheel(0, 500);
+    await page.waitForTimeout(300);
+    const after = await page.evaluate(() => {
+      const globe = document.querySelector('[data-testid="story-visual-mobile-feature-secure-wallet"] [data-testid="story-globe-wallet"]')!.getBoundingClientRect();
+      const label = document.querySelector('[data-testid="story-visual-mobile-feature-secure-wallet"] [data-testid="story-orbit-label-keys"]')!.getBoundingClientRect();
+      return { x: label.x - globe.x, y: label.y - globe.y };
+    });
+
+    expect(Math.abs(before.x - after.x)).toBeLessThan(6);
+    expect(Math.abs(before.y - after.y)).toBeLessThan(6);
   });
 });

@@ -56,6 +56,15 @@ html { scroll-behavior: smooth; }
 section { scroll-margin-top: 5rem; }
 
 /* Story orbit animation */
+@keyframes story-orbit-dash {
+  from { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -56; }
+}
+
+.story-orbit-dash {
+  animation: story-orbit-dash 18s linear infinite;
+}
+
 @keyframes story-orbit {
   from {
     transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg);
