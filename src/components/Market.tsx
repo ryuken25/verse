@@ -166,7 +166,7 @@ export default function Market() {
 
         {/* Tabs + Search */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-1 bg-white/5 rounded-xl p-1 overflow-x-auto">
+          <div className="mobile-scroll-x flex w-full items-center gap-1 rounded-xl bg-white/5 p-1 sm:w-auto">
             {tabs.map(tab => (
               <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
                 className={`px-3 py-2 rounded-lg text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
@@ -203,10 +203,10 @@ export default function Market() {
                   transition={{ delay: (i % LOAD_MORE) * 0.03 }}
                   className="grid grid-cols-[40px_1fr_120px_100px_120px_120px_40px] gap-2 px-4 py-3 items-center hover:bg-white/5 transition-colors border-t border-white/5">
                   <span className="text-xs text-gray-500">{coin.rank}</span>
-                  <div className="flex items-center space-x-3">
+                  <div className="flex min-w-0 items-center space-x-3">
                     {coin.image && <img src={coin.image} alt={coin.symbol} className="w-6 h-6 rounded-full" />}
                     <div>
-                      <p className="text-sm text-white font-medium">{coin.name}</p>
+                      <p className="max-w-[150px] truncate text-sm font-medium text-white sm:max-w-none">{coin.name}</p>
                       <p className="text-xs text-gray-500">{coin.symbol}</p>
                     </div>
                   </div>
@@ -240,12 +240,12 @@ export default function Market() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: (i % LOAD_MORE) * 0.03 }}
-                className="glass p-4 rounded-xl">
+                className="glass w-full overflow-hidden rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center space-x-3">
+                  <div className="flex min-w-0 items-center space-x-3">
                     {coin.image && <img src={coin.image} alt={coin.symbol} className="w-8 h-8 rounded-full" />}
                     <div>
-                      <p className="text-sm text-white font-medium">{coin.name}</p>
+                      <p className="max-w-[150px] truncate text-sm font-medium text-white sm:max-w-none">{coin.name}</p>
                       <p className="text-xs text-gray-500">{coin.symbol} • #{coin.rank}</p>
                     </div>
                   </div>
@@ -259,7 +259,7 @@ export default function Market() {
                     {pctIcon(coin.change24h)}<span>{coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%</span>
                   </span>
                 </div>
-                <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
+                <div className="mt-2 grid grid-cols-1 gap-1 text-xs text-gray-500 min-[390px]:grid-cols-2">
                   <span>MCap: {coin.marketCap > 0 ? fmt(coin.marketCap) : '—'}</span>
                   <span>Vol: {coin.volume24h > 0 ? fmt(coin.volume24h) : '—'}</span>
                 </div>

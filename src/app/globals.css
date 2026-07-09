@@ -12,6 +12,9 @@
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; overflow-x: hidden; }
+img, svg, video, canvas { max-width: 100%; }
+pre, code { max-width: 100%; overflow-x: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
 
 body {
   background: var(--background);
@@ -31,7 +34,11 @@ button, a, [role="button"], input, select, textarea {
   button, a, [role="button"] {
     min-height: 44px;
   }
+  input, select, textarea { font-size: 16px; }
+  .mobile-no-sticky { position: static !important; top: auto !important; }
 }
+.hash-chip { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 
 .glass {
   background: var(--glass);
@@ -48,7 +55,7 @@ button, a, [role="button"], input, select, textarea {
   background-clip: text;
 }
 
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--background); }
 ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
