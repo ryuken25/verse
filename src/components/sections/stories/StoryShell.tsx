@@ -33,7 +33,7 @@ export default function StoryShell({
   steps,
   visual,
   ctas,
-  minHeightClass = 'min-h-[300vh] lg:min-h-[340vh]',
+  minHeightClass = 'min-h-[220vh] lg:min-h-[260vh]',
 }: StoryShellProps) {
   const ref = useRef<HTMLElement>(null);
   const [activeStep, setActiveStep] = useState(0);
@@ -60,7 +60,7 @@ export default function StoryShell({
   });
 
   const active = steps[activeStep];
-  const mobileHeightClass = steps.length >= 6 ? 'min-h-[200vh]' : steps.length >= 5 ? 'min-h-[180vh]' : 'min-h-[160vh]';
+  const mobileHeightClass = steps.length >= 6 ? 'min-h-[160vh]' : steps.length >= 5 ? 'min-h-[140vh]' : 'min-h-[120vh]';
 
   if (!mediaReady) {
     return (
@@ -92,12 +92,26 @@ export default function StoryShell({
             {visual({ activeStep, scrollYProgress, paused: true, compact: true })}
           </div>
 
-          <div className="mt-7">
-            <div className="mb-3 min-h-5 text-xs text-gray-500">{activeStep > 0 ? `↑ ${steps[activeStep - 1].title}` : ''}</div>
+          {/* Progress rail - mobile */}
+          <div className="mt-6 flex items-center gap-1.5">
+            {steps.map((step, i) => (
+              <div
+                key={step.id}
+                className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                  i === activeStep ? 'bg-cyan-400' : i < activeStep ? 'bg-cyan-400/40' : 'bg-white/10'
+                }`}
+              />
+            ))}
+          </div>
+
+          <div className="mt-5">
             <AnimatePresence mode="wait">
               <StoryStepCard key={active.id} step={active} index={activeStep} active compact storySlide />
             </AnimatePresence>
-            <div className="mt-3 min-h-5 text-xs text-gray-500">{activeStep < steps.length - 1 ? `↓ ${steps[activeStep + 1].title}` : 'End of story'}</div>
+            <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+              <span>{activeStep > 0 ? `↑ ${steps[activeStep - 1].title}` : ''}</span>
+              <span>{activeStep < steps.length - 1 ? `↓ ${steps[activeStep + 1].title}` : 'End'}</span>
+            </div>
             <div className="mt-5">{ctas}</div>
           </div>
         </div>
@@ -114,23 +128,39 @@ export default function StoryShell({
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_48%_25%,rgba(124,58,237,0.13),transparent_35%),radial-gradient(circle_at_80%_55%,rgba(34,211,238,0.08),transparent_30%)]" />
       <div className="sticky top-[72px] min-h-[calc(100vh-72px)]">
-        <div className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl grid-cols-[0.95fr_1.05fr] gap-10 px-6">
-          <motion.div style={{ opacity: contentOpacity }} className="flex min-h-[calc(100vh-72px)] flex-col justify-center py-10">
+        <div className="mx-auto grid min-h-[calc(100vh-72px)] max-w-7xl grid-cols-2 gap-8 px-6 lg:gap-10">
+          {/* Left: text content */}
+          <motion.div style={{ opacity: contentOpacity }} className="flex min-h-0 flex-col justify-center overflow-hidden py-8 lg:py-10">
             <span className="inline-flex w-fit rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-purple-200">{eyebrow}</span>
-            <h2 className="mt-4 text-5xl font-bold tracking-tight text-white">{title}</h2>
-            <p className="mt-4 max-w-2xl text-lg leading-8 text-gray-300">{description}</p>
+            <h2 className="mt-4 text-4xl font-bold tracking-tight text-white lg:text-5xl">{title}</h2>
+            <p className="mt-4 max-w-xl text-base leading-8 text-gray-300 lg:text-lg">{description}</p>
 
-            <div className="mt-8">
-              <div className="mb-4 min-h-6 text-sm text-gray-500">{activeStep > 0 ? `↑ ${steps[activeStep - 1].title}` : ''}</div>
+            <div className="mt-6 lg:mt-8">
+              {/* Progress rail */}
+              <div className="mb-4 flex items-center gap-1.5">
+                {steps.map((step, i) => (
+                  <div
+                    key={step.id}
+                    className={`h-1 flex-1 rounded-full transition-colors duration-300 ${
+                      i === activeStep ? 'bg-cyan-400' : i < activeStep ? 'bg-cyan-400/40' : 'bg-white/10'
+                    }`}
+                  />
+                ))}
+              </div>
+
               <AnimatePresence mode="wait">
                 <StoryStepCard key={active.id} step={active} index={activeStep} active storySlide />
               </AnimatePresence>
-              <div className="mt-4 min-h-6 text-sm text-gray-500">{activeStep < steps.length - 1 ? `↓ ${steps[activeStep + 1].title}` : 'End of story'}</div>
+              <div className="mt-3 flex items-center justify-between text-sm text-gray-500">
+                <span>{activeStep > 0 ? `↑ ${steps[activeStep - 1].title}` : ''}</span>
+                <span>{activeStep < steps.length - 1 ? `↓ ${steps[activeStep + 1].title}` : 'End of story'}</span>
+              </div>
               <div className={activeStep >= steps.length - 1 ? 'mt-6 opacity-100 transition-opacity' : 'mt-6 opacity-30 transition-opacity'}>{ctas}</div>
             </div>
           </motion.div>
 
-          <motion.div style={{ opacity: visualOpacity }} data-testid={`story-visual-${id}`} className="flex min-h-[calc(100vh-72px)] items-center justify-center py-10">
+          {/* Right: visual */}
+          <motion.div style={{ opacity: visualOpacity }} data-testid={`story-visual-${id}`} className="flex min-h-0 items-center justify-center overflow-hidden py-8 lg:py-10">
             {visual({ activeStep, scrollYProgress, paused, compact: false })}
           </motion.div>
         </div>

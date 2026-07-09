@@ -22,7 +22,7 @@ export default function SecureWalletStory() {
       title="Secure Wallet"
       description="Your crypto, your keys. VERSE uses non-custodial wallets so you always control your funds."
       steps={steps}
-      minHeightClass="min-h-[380vh] lg:min-h-[430vh]"
+      minHeightClass="min-h-[280vh] lg:min-h-[320vh]"
       visual={({ activeStep, paused, compact }) => (
         <StoryGlobeOrbitVisual
           theme="wallet"
