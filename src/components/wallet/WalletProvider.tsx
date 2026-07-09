@@ -11,8 +11,12 @@ const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
 // Create config with multiple connectors
 const config = createConfig({
   chains: [polygon],
+  // Wagmi's EIP-6963 discovery expands detected browser wallets (MetaMask,
+  // Rabby, OKX, Bitget, etc.) into individual injected connectors instead of a
+  // single ambiguous "Injected" row. The explicit injected connector remains as
+  // a fallback for legacy/non-6963 extensions.
+  multiInjectedProviderDiscovery: true,
   connectors: [
-    // Injected connector for browser extensions (MetaMask, Rabby, OKX, Bitget, etc.)
     injected({ shimDisconnect: true }),
     // WalletConnect for mobile QR/deeplink (only if projectId exists)
     ...(projectId

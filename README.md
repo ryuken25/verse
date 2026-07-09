@@ -132,3 +132,14 @@ Project Link: [https://github.com/ryuken/verse](https://github.com/ryuken/verse)
 <div align="center">
 Made with ❤️ by the VERSE Community
 </div>
+
+
+### WalletConnect
+
+WalletConnect QR/mobile support requires:
+
+```env
+NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id
+```
+
+Without this env, browser extension wallets still work, but WalletConnect is hidden/disabled cleanly. Wallet popups are only triggered after a user click.
